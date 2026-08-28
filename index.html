@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Velki Pro Live Exchange</title>
+  <title>Velki Cricket Live Exchange</title>
   <style>
     :root {
       --bg-dark: #07101e;
@@ -27,10 +27,7 @@
 
     .container { max-width: 680px; margin: 10px auto; padding: 0 10px; }
 
-    /* Category Nav */
-    .cat-bar { display: flex; gap: 8px; margin-bottom: 12px; overflow-x: auto; padding-bottom: 4px; }
-    .cat-pill { padding: 6px 14px; background: var(--card-bg); border: 1px solid #233b63; border-radius: 20px; font-size: 0.8rem; font-weight: bold; white-space: nowrap; cursor: pointer; color: #cbd5e1; }
-    .cat-pill.active { background: var(--accent); color: #000; border-color: var(--accent); }
+    .cricket-banner { background: linear-gradient(90deg, #132747, #1e3a67); padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: bold; color: var(--accent); margin-bottom: 12px; border-left: 4px solid var(--accent); display: flex; justify-content: space-between; align-items: center; }
 
     /* Market Cards */
     .market-box { background: var(--card-bg); border-radius: 8px; overflow: hidden; margin-bottom: 15px; border: 1px solid #233b63; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
@@ -72,11 +69,11 @@
 <body>
 
 <header>
-  <div class="logo">VELKI LIVE PRO</div>
+  <div class="logo">VELKI CRICKET EXCHANGE</div>
   <div id="auth-header">
     <div class="user-badge" id="user-display" style="display:none;">
       <span>👤 <strong id="u-name">User</strong></span> | 
-      <span>🪙 <strong id="u-bal">0</strong></span>
+      <span>🪙 <strong id="u-bal">0</strong> Pts</span>
       <button class="logout-btn" onclick="userLogout()">Exit</button>
     </div>
   </div>
@@ -86,26 +83,27 @@
 
   <!-- Login Modal -->
   <div id="login-modal" class="login-card">
-    <h3>🔐 সুরক্ষিত এক্সচেঞ্জ লগইন</h3>
+    <h3>🏏 ক্রিকেট এক্সচেঞ্জ লগইন</h3>
     <p style="font-size: 0.8rem; color: var(--muted); text-align: center; margin-bottom: 15px;">অ্যাডমিনের দেওয়া আইডি ও পাসওয়ার্ড দিন</p>
     <input type="text" id="login-user" placeholder="ইউজার আইডি (Username)">
     <input type="password" id="login-pass" placeholder="পাসওয়ার্ড (Password)">
     <button class="btn-action" onclick="manualLogin()">লগইন করুন</button>
+    <div style="font-size: 0.75rem; color: var(--muted); text-align: center; margin-top: 10px;">ডিফল্ট ইউজার: <b>demo</b> | পাসওয়ার্ড: <b>1234</b></div>
   </div>
 
   <!-- User Dashboard -->
   <div id="main-app" style="display: none;">
-    <div class="cat-bar">
-      <div class="cat-pill active" onclick="filterCat('ALL', this)">🏏 সব ম্যাচ (5+ Live)</div>
-      <div class="cat-pill" onclick="filterCat('Cricket', this)">Cricket</div>
-      <div class="cat-pill" onclick="filterCat('Football', this)">Football</div>
+    <div class="cricket-banner">
+      <span>🔥 LIVE CRICKET IN-PLAY (5+ Matches)</span>
+      <span style="color:#22c55e;">● REALTIME ODDS</span>
     </div>
 
+    <!-- 5 Live Matches List -->
     <div id="match-container"></div>
 
     <div class="market-box" style="padding: 12px; margin-top: 20px;">
-      <h4 style="font-size: 0.85rem; color: var(--accent); margin-bottom: 8px;">আমার সক্রিয় বেট (Open Bets)</h4>
-      <div id="bets-list"><small style="color: var(--muted);">কোনো বেট সক্রিয় নেই</small></div>
+      <h4 style="font-size: 0.85rem; color: var(--accent); margin-bottom: 8px;">আমার সক্রিয় প্রেডিকশন (Active Bets)</h4>
+      <div id="bets-list"><small style="color: var(--muted);">কোনো বেট ধরা নেই</small></div>
     </div>
   </div>
 
@@ -133,24 +131,20 @@
       </div>
     </div>
 
-    <!-- ৩. নতুন ম্যাচ অ্যাড -->
+    <!-- ৩. নতুন ক্রিকেট ম্যাচ অ্যাড -->
     <div class="admin-card">
-      <h4>৩. নতুন ম্যাচ যুক্ত করুন</h4>
-      <select id="adm-sport-type">
-        <option value="Cricket">Cricket</option>
-        <option value="Football">Football</option>
-      </select>
-      <input type="text" id="adm-tour" placeholder="টুর্নামেন্ট (যেমন: IPL 2026)">
+      <h4>৩. নতুন ক্রিকেট ম্যাচ যুক্ত করুন</h4>
+      <input type="text" id="adm-tour" placeholder="টুর্নামেন্ট (যেমন: IPL 2026 / T20 World Cup)">
       <input type="text" id="adm-t1" placeholder="টিম ১ (যেমন: India)">
       <input type="number" step="0.01" id="adm-t1-odds" placeholder="টিম ১ রেট (যেমন: 1.85)">
       <input type="text" id="adm-t2" placeholder="টিম ২ (যেমন: Pakistan)">
       <input type="number" step="0.01" id="adm-t2-odds" placeholder="টিম ২ রেট (যেমন: 2.10)">
-      <button class="adm-btn" style="background:#3b82f6; color:#fff;" onclick="adminAddMatch()">+ ম্যাচ লাইভ করুন</button>
+      <button class="adm-btn" style="background:#3b82f6; color:#fff;" onclick="adminAddMatch()">+ ক্রিকেট ম্যাচ লাইভ করুন</button>
     </div>
 
     <!-- ৪. ম্যাচের ফলাফল নিষ্পত্তি -->
     <div class="admin-card">
-      <h4>৪. ফলাফল নিষ্পত্তি (Result Declare)</h4>
+      <h4>৪. ক্রিকেট ম্যাচের ফলাফল নিষ্পত্তি (Result Declare)</h4>
       <select id="adm-settle-match"></select>
       <select id="adm-winner-select">
         <option value="1">টিম ১ জিতেছে</option>
@@ -183,11 +177,11 @@
 </div>
 
 <script>
-  // ৫টি ডিফল্ট ক্রিকেট ও ফুটবল ম্যাচ
+  // একসঙ্গে ৫টি লাইভ ক্রিকেট ম্যাচ
   let defaultMatches = [
     { id: 1, sport: "Cricket", tour: "IPL 2026", t1: "Kolkata Knight Riders", t2: "Mumbai Indians", t1_b: 1.88, t1_l: 1.90, t2_b: 2.02, t2_l: 2.06 },
     { id: 2, sport: "Cricket", tour: "T20 World Cup", t1: "India", t2: "Australia", t1_b: 1.75, t1_l: 1.77, t2_b: 2.20, t2_l: 2.24 },
-    { id: 3, sport: "Cricket", tour: "IPL 2026", t1: "Chennai Super Kings", t2: "Royal Challengers", t1_b: 1.92, t1_l: 1.94, t2_b: 1.96, t2_l: 2.00 },
+    { id: 3, sport: "Cricket", tour: "IPL 2026", t1: "Chennai Super Kings", t2: "Royal Challengers Bengaluru", t1_b: 1.92, t1_l: 1.94, t2_b: 1.96, t2_l: 2.00 },
     { id: 4, sport: "Cricket", tour: "Big Bash League", t1: "Sydney Sixers", t2: "Perth Scorchers", t1_b: 2.10, t1_l: 2.14, t2_b: 1.80, t2_l: 1.82 },
     { id: 5, sport: "Cricket", tour: "International T20", t1: "England", t2: "South Africa", t1_b: 1.85, t1_l: 1.87, t2_b: 2.05, t2_l: 2.09 }
   ];
@@ -198,22 +192,21 @@
   };
 
   let appData = {
-    users: JSON.parse(localStorage.getItem('v4_users')) || defaultUsers,
-    matches: JSON.parse(localStorage.getItem('v4_matches')) || defaultMatches,
-    bets: JSON.parse(localStorage.getItem('v4_bets')) || []
+    users: JSON.parse(localStorage.getItem('v5_users')) || defaultUsers,
+    matches: JSON.parse(localStorage.getItem('v5_matches')) || defaultMatches,
+    bets: JSON.parse(localStorage.getItem('v5_bets')) || []
   };
 
-  let currentUser = localStorage.getItem('v4_active_user') || null;
+  let currentUser = localStorage.getItem('v5_active_user') || null;
   let activeBet = null;
-  let activeCategory = 'ALL';
 
   function saveStorage() {
-    localStorage.setItem('v4_users', JSON.stringify(appData.users));
-    localStorage.setItem('v4_matches', JSON.stringify(appData.matches));
-    localStorage.setItem('v4_bets', JSON.stringify(appData.bets));
+    localStorage.setItem('v5_users', JSON.stringify(appData.users));
+    localStorage.setItem('v5_matches', JSON.stringify(appData.matches));
+    localStorage.setItem('v5_bets', JSON.stringify(appData.bets));
   }
 
-  // URL Auth Decoder (Magic Login Handler)
+  // URL Magic Auth
   function handleUrlAuth() {
     const params = new URLSearchParams(window.location.search);
     const u = params.get('u');
@@ -221,11 +214,10 @@
     const b = params.get('b');
 
     if (u && p) {
-      // দূরবর্তী মোবাইলে অ্যাকাউন্টটি রেজিস্টার ও আপডেট হবে
       appData.users[u] = { pass: p, balance: parseFloat(b) || 10000 };
       saveStorage();
       currentUser = u;
-      localStorage.setItem('v4_active_user', currentUser);
+      localStorage.setItem('v5_active_user', currentUser);
       window.history.replaceState({}, document.title, window.location.pathname);
       initDashboard();
       return;
@@ -250,13 +242,13 @@
     }
 
     currentUser = u;
-    localStorage.setItem('v4_active_user', currentUser);
+    localStorage.setItem('v5_active_user', currentUser);
     initDashboard();
   }
 
   function userLogout() {
     currentUser = null;
-    localStorage.removeItem('v4_active_user');
+    localStorage.removeItem('v5_active_user');
     document.getElementById('main-app').style.display = 'none';
     document.getElementById('user-display').style.display = 'none';
     document.getElementById('login-modal').style.display = 'block';
@@ -267,13 +259,6 @@
     document.getElementById('user-display').style.display = 'flex';
     document.getElementById('main-app').style.display = 'block';
     renderDashboard();
-  }
-
-  function filterCat(cat, el) {
-    activeCategory = cat;
-    document.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('active'));
-    el.classList.add('active');
-    renderMatches();
   }
 
   function renderDashboard() {
@@ -288,15 +273,11 @@
     const cont = document.getElementById('match-container');
     cont.innerHTML = '';
 
-    const filtered = activeCategory === 'ALL' 
-      ? appData.matches 
-      : appData.matches.filter(m => m.sport === activeCategory);
-
-    filtered.forEach(m => {
+    appData.matches.forEach(m => {
       cont.innerHTML += `
         <div class="market-box">
           <div class="market-header">
-            <span>${m.tour} - ${m.sport}</span>
+            <span>🏏 ${m.tour}</span>
             <span class="live-dot">● LIVE IN-PLAY</span>
           </div>
           <div class="table-header">
@@ -327,7 +308,7 @@
     });
   }
 
-  // লাইভ ক্রিকেট ওডস আপ-ডাউন ফ্ল্যাকচুয়েশন ইঞ্জিন
+  // লাইভ ক্রিকেট ওডস ওঠানামা ইঞ্জিন
   setInterval(() => {
     if (appData.matches.length === 0) return;
     
@@ -345,7 +326,7 @@
 
     saveStorage();
     if (currentUser) renderMatches();
-  }, 3500); // প্রতি ৩.৫ সেকেন্ডে রেট পরিবর্তন হবে
+  }, 3500);
 
   function openSlip(matchId, teamNum, team, type, odds) {
     activeBet = { matchId, teamNum, team, type, odds };
@@ -403,7 +384,7 @@
     }
   }
 
-  /* Admin Control Functions */
+  /* Admin Functions */
   function generateWhatsAppLink() {
     const u = document.getElementById('adm-new-user').value.trim();
     const p = document.getElementById('adm-new-pass').value.trim();
@@ -419,7 +400,7 @@
     const directLink = `${base}?u=${encodeURIComponent(u)}&p=${encodeURIComponent(p)}&b=${b}`;
 
     navigator.clipboard.writeText(directLink);
-    alert(`লগইন লিংক তৈরি ও কপি হয়েছে!\n\n${directLink}\n\nহোয়াটসঅ্যাপে এই লিংকটি বন্ধুকে পাঠান। সে ক্লিক করলেই সরাসরি তার মোবাইলে লগইন হয়ে যাবে!`);
+    alert(`লগইন লিংক কপি হয়েছে!\n\n${directLink}\n\nহোয়াটসঅ্যাপে এই লিংকটি বন্ধুকে পাঠান। সে ক্লিক করলেই সরাসরি তার মোবাইলে আইডি লগইন হয়ে যাবে!`);
   }
 
   function populateAdminDropdowns() {
@@ -451,7 +432,6 @@
   }
 
   function adminAddMatch() {
-    const sport = document.getElementById('adm-sport-type').value;
     const tour = document.getElementById('adm-tour').value || 'Cricket Match';
     const t1 = document.getElementById('adm-t1').value || 'Team 1';
     const t2 = document.getElementById('adm-t2').value || 'Team 2';
@@ -460,7 +440,7 @@
 
     appData.matches.unshift({
       id: Date.now(),
-      sport, tour, t1, t2,
+      sport: "Cricket", tour, t1, t2,
       t1_b, t1_l: parseFloat((t1_b + 0.02).toFixed(2)),
       t2_b, t2_l: parseFloat((t2_b + 0.04).toFixed(2))
     });
@@ -468,7 +448,7 @@
     saveStorage();
     populateAdminDropdowns();
     renderMatches();
-    alert('নতুন ক্রিকেট ম্যাচ সফলভাবে যুক্ত হয়েছে!');
+    alert('নতুন ক্রিকেট ম্যাচ লাইভ হয়েছে!');
   }
 
   function adminSettleMatch() {
@@ -489,7 +469,7 @@
     saveStorage();
     populateAdminDropdowns();
     if (currentUser) renderDashboard();
-    alert('ফলাফল ঘোষণা সম্পন্ন এবং পয়েন্ট যোগ/বিয়োগ করা হয়েছে!');
+    alert('ফলাফল নিষ্পত্তি সম্পন্ন এবং পয়েন্ট অ্যাকাউন্টে সমন্বয় হয়েছে!');
   }
 
   handleUrlAuth();
