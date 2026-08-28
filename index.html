@@ -4,8 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Velki Pro Realtime Exchange</title>
-  <!-- GunDB Realtime Peer Sync Library -->
-  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
   <style>
     :root {
       --bg-dark: #07101e;
@@ -138,7 +136,7 @@
       </div>
     </div>
 
-    <!-- ৪. নতুন ম্যাচ তৈরি (একাধিক ম্যাচ অ্যাড করার অপশন) -->
+    <!-- ৪. নতুন ম্যাচ তৈরি -->
     <div class="admin-card">
       <h4>৪. নতুন ক্রিকেট ম্যাচ যুক্ত করুন (Add Multiple Matches)</h4>
       <input type="text" id="adm-tour" placeholder="টুর্নামেন্ট (যেমন: IPL 2026 / T20 Cup)">
@@ -190,9 +188,8 @@
 </div>
 
 <script>
-  // GunDB P2P Realtime Node
-  const gun = Gun(['https://gun-manhattan.herokuapp.com/gun', 'https://peer.wallie.io/gun']);
-  const db = gun.get('velki_live_sports_v999');
+  // রিয়েল-টাইম ক্লাউড পাইপলাইন চ্যানেল
+  const REALTIME_TOPIC = "velki_lucky840706_exchange_channel_live";
 
   let defaultMatches = [
     { id: 1, tour: "IPL 2026", t1: "Kolkata Knight Riders", t2: "Mumbai Indians", t1_b: 1.88, t1_l: 1.90, t2_b: 2.02, t2_l: 2.06 },
@@ -200,30 +197,92 @@
   ];
 
   let appData = {
-    users: { "demo": { pass: "1234", balance: 10000 } },
-    matches: defaultMatches,
-    bets: [],
-    rejectMode: 'OFF'
+    users: JSON.parse(localStorage.getItem('vk_saved_users')) || { "demo": { pass: "1234", balance: 10000 } },
+    matches: JSON.parse(localStorage.getItem('vk_saved_matches')) || defaultMatches,
+    bets: JSON.parse(localStorage.getItem('vk_saved_bets')) || [],
+    rejectMode: localStorage.getItem('vk_saved_reject') || 'OFF'
   };
 
-  let currentUser = localStorage.getItem('vk_active_session') || null;
+  let currentUser = localStorage.getItem('vk_saved_session') || null;
   let activeBet = null;
 
-  // Realtime Listener (অ্যাডমিন চেঞ্জ করলেই ইউজারের ফোনে ১ সেকেন্ডের মধ্যে পরিবর্তন হবে)
-  db.on((data) => {
-    if (data && data.payload) {
-      try {
-        const parsed = JSON.parse(data.payload);
-        appData = parsed;
-        if (currentUser) renderDashboard();
-        if (window.location.hash === '#secretadmin') populateAdminPanels();
-      } catch(e) {}
-    }
-  });
+  function saveLocalState() {
+    localStorage.setItem('vk_saved_users', JSON.stringify(appData.users));
+    localStorage.setItem('vk_saved_matches', JSON.stringify(appData.matches));
+    localStorage.setItem('vk_saved_bets', JSON.stringify(appData.bets));
+    localStorage.setItem('vk_saved_reject', appData.rejectMode);
+  }
 
-  function broadcastData() {
-    db.put({ payload: JSON.stringify(appData) });
-    localStorage.setItem('vk_backup_state', JSON.stringify(appData));
+  // ক্লাউডে সাথে সাথে পাবলিশ
+  async function publishToCloud() {
+    saveLocalState();
+    try {
+      await fetch(`https://ntfy.sh/${REALTIME_TOPIC}`, {
+        method: 'POST',
+        body: JSON.stringify(appData)
+      });
+    } catch (e) {}
+  }
+
+  // ক্লাউড থেকে ইনস্ট্যান্ট রিসিভার (SSE + Polling)
+  function initRealtimeSync() {
+    // ১. লেটেস্ট মেসেজ লোড
+    fetch(`https://ntfy.sh/${REALTIME_TOPIC}/json?poll=1&since=latest`)
+      .then(r => r.text())
+      .then(text => {
+        const lines = text.trim().split('\n');
+        for (const line of lines) {
+          if (!line) continue;
+          try {
+            const obj = JSON.parse(line);
+            if (obj.event === 'message' && obj.message) {
+              appData = JSON.parse(obj.message);
+              saveLocalState();
+              updateAllViews();
+            }
+          } catch(e) {}
+        }
+      }).catch(()=>{});
+
+    // ২. রিয়েলটাইম লাইভ স্ট্রিম
+    try {
+      const eventSource = new EventSource(`https://ntfy.sh/${REALTIME_TOPIC}/sse`);
+      eventSource.onmessage = (e) => {
+        try {
+          const obj = JSON.parse(e.data);
+          if (obj.event === 'message' && obj.message) {
+            appData = JSON.parse(obj.message);
+            saveLocalState();
+            updateAllViews();
+          }
+        } catch(err){}
+      };
+    } catch(e){}
+
+    // ৩. ব্যাকআপ পল
+    setInterval(() => {
+      fetch(`https://ntfy.sh/${REALTIME_TOPIC}/json?poll=1&since=latest`)
+        .then(r => r.text())
+        .then(text => {
+          const lines = text.trim().split('\n');
+          for (const line of lines) {
+            if (!line) continue;
+            try {
+              const obj = JSON.parse(line);
+              if (obj.event === 'message' && obj.message) {
+                appData = JSON.parse(obj.message);
+                saveLocalState();
+                updateAllViews();
+              }
+            } catch(e) {}
+          }
+        }).catch(()=>{});
+    }, 2000);
+  }
+
+  function updateAllViews() {
+    if (currentUser) renderDashboard();
+    if (window.location.hash === '#secretadmin') populateAdminPanels();
   }
 
   function handleUrlAuth() {
@@ -235,9 +294,9 @@
     if (u && p) {
       if (!appData.users) appData.users = {};
       appData.users[u] = { pass: p, balance: parseFloat(b) || 10000 };
-      broadcastData();
       currentUser = u;
-      localStorage.setItem('vk_active_session', currentUser);
+      localStorage.setItem('vk_saved_session', currentUser);
+      publishToCloud();
       window.history.replaceState({}, document.title, window.location.pathname);
       initDashboard();
       return;
@@ -262,13 +321,13 @@
     }
 
     currentUser = u;
-    localStorage.setItem('vk_active_session', currentUser);
+    localStorage.setItem('vk_saved_session', currentUser);
     initDashboard();
   }
 
   function userLogout() {
     currentUser = null;
-    localStorage.removeItem('vk_active_session');
+    localStorage.removeItem('vk_saved_session');
     document.getElementById('main-app').style.display = 'none';
     document.getElementById('user-display').style.display = 'none';
     document.getElementById('login-modal').style.display = 'block';
@@ -349,6 +408,7 @@
     document.getElementById('betslip').style.display = 'none';
   }
 
+  // ১০০% বেট রিজেক্ট চেকার
   function confirmBet() {
     const stake = parseFloat(document.getElementById('slip-amount').value);
     if (!stake || stake <= 0 || stake > appData.users[currentUser].balance) {
@@ -357,7 +417,7 @@
 
     if (appData.rejectMode === 'ON') {
       closeSlip();
-      return alert('⚠️ Unmatched Bet / Rate Suspended! বেটটি রিজেক্ট করা হয়েছে।');
+      return alert('⚠️ Unmatched Bet / Rate Suspended! অ্যাডমিন মার্কেট স্থগিত করায় আপনার বেটটি বাতিল করা হলো।');
     }
 
     appData.users[currentUser].balance -= stake;
@@ -374,7 +434,7 @@
       status: 'OPEN'
     });
 
-    broadcastData();
+    publishToCloud();
     closeSlip();
     renderDashboard();
     alert('✅ বেট সফলভাবে প্লেস হয়েছে!');
@@ -399,38 +459,40 @@
   function populateAdminPanels() {
     document.getElementById('adm-reject-switch').value = appData.rejectMode || 'OFF';
 
-    // Users Dropdown
     const userSel = document.getElementById('adm-wallet-user-select');
-    userSel.innerHTML = Object.keys(appData.users || {}).map(u => `<option value="${u}">${u} (${appData.users[u].balance} Pts)</option>`).join('');
+    if (userSel) {
+      userSel.innerHTML = Object.keys(appData.users || {}).map(u => `<option value="${u}">${u} (${appData.users[u].balance} Pts)</option>`).join('');
+    }
 
-    // Settle Match Dropdown
     const matchSel = document.getElementById('adm-settle-match');
-    matchSel.innerHTML = (appData.matches || []).map(m => `<option value="${m.id}">${m.t1} vs ${m.t2}</option>`).join('');
+    if (matchSel) {
+      matchSel.innerHTML = (appData.matches || []).map(m => `<option value="${m.id}">${m.t1} vs ${m.t2}</option>`).join('');
+    }
 
-    // Matches List Control
     const mList = document.getElementById('admin-matches-control-list');
-    mList.innerHTML = '';
-
-    (appData.matches || []).forEach(m => {
-      mList.innerHTML += `
-        <div class="admin-match-item">
-          <div style="display:flex; justify-content:space-between; font-weight:bold; margin-bottom:6px; color:var(--accent);">
-            <span>${m.t1} vs ${m.t2} (${m.tour})</span>
-            <button onclick="adminDeleteMatchById(${m.id})" style="background:var(--danger); color:#fff; border:none; padding:2px 8px; border-radius:3px; cursor:pointer;">মুছুন</button>
+    if (mList) {
+      mList.innerHTML = '';
+      (appData.matches || []).forEach(m => {
+        mList.innerHTML += `
+          <div class="admin-match-item">
+            <div style="display:flex; justify-content:space-between; font-weight:bold; margin-bottom:6px; color:var(--accent);">
+              <span>${m.t1} vs ${m.t2} (${m.tour})</span>
+              <button onclick="adminDeleteMatchById(${m.id})" style="background:var(--danger); color:#fff; border:none; padding:4px 10px; border-radius:3px; cursor:pointer;">🗑️ ডিলিট</button>
+            </div>
+            <div style="display:flex; gap:6px; margin-bottom:6px;">
+              <input type="number" step="0.01" value="${m.t1_b}" id="adm-odds1-${m.id}" placeholder="${m.t1} Rate">
+              <input type="number" step="0.01" value="${m.t2_b}" id="adm-odds2-${m.id}" placeholder="${m.t2} Rate">
+            </div>
+            <button class="adm-btn" style="background:#22c55e; color:#fff;" onclick="adminUpdateOddsById(${m.id})">💾 লাইভ রেট আপডেট</button>
           </div>
-          <div style="display:flex; gap:6px;">
-            <input type="number" step="0.01" value="${m.t1_b}" id="adm-odds1-${m.id}" placeholder="${m.t1} Rate">
-            <input type="number" step="0.01" value="${m.t2_b}" id="adm-odds2-${m.id}" placeholder="${m.t2} Rate">
-          </div>
-          <button class="adm-btn" style="background:#22c55e; color:#fff;" onclick="adminUpdateOddsById(${m.id})">💾 এই ম্যাচের ওডস লাইভ করুন</button>
-        </div>
-      `;
-    });
+        `;
+      });
+    }
   }
 
   function toggleRejectMode() {
     appData.rejectMode = document.getElementById('adm-reject-switch').value;
-    broadcastData();
+    publishToCloud();
     alert(`বেট রিজেক্ট মোড এখন: ${appData.rejectMode}`);
   }
 
@@ -443,7 +505,7 @@
 
     if (!appData.users) appData.users = {};
     appData.users[u] = { pass: p, balance: parseFloat(b) };
-    broadcastData();
+    publishToCloud();
     populateAdminPanels();
 
     const base = window.location.origin + window.location.pathname;
@@ -468,7 +530,7 @@
       t2_b, t2_l: parseFloat((t2_b + 0.04).toFixed(2))
     });
 
-    broadcastData();
+    publishToCloud();
     populateAdminPanels();
     renderMatches();
     alert('নতুন ক্রিকেট ম্যাচ লাইভ হয়েছে!');
@@ -481,15 +543,15 @@
       const o2 = parseFloat(document.getElementById(`adm-odds2-${id}`).value);
       if (o1) { m.t1_b = o1; m.t1_l = parseFloat((o1 + 0.02).toFixed(2)); }
       if (o2) { m.t2_b = o2; m.t2_l = parseFloat((o2 + 0.04).toFixed(2)); }
-      broadcastData();
+      publishToCloud();
       alert('ওডস রিয়েলটাইমে আপডেট হয়েছে!');
     }
   }
 
   function adminDeleteMatchById(id) {
-    if (!confirm('ম্যাচটি মুছতে চান?')) return;
+    if (!confirm('ম্যাচটি মুছে ফেলতে চান?')) return;
     appData.matches = (appData.matches || []).filter(m => m.id !== id);
-    broadcastData();
+    publishToCloud();
     populateAdminPanels();
     renderMatches();
     alert('ম্যাচ মুছে ফেলা হয়েছে!');
@@ -510,7 +572,7 @@
       alert(`${targetUser}-এর অ্যাকাউন্ট থেকে ${amount} পয়েন্ট কাটা হয়েছে!`);
     }
 
-    broadcastData();
+    publishToCloud();
     populateAdminPanels();
     if (currentUser === targetUser) renderDashboard();
   }
@@ -530,12 +592,13 @@
     });
 
     appData.matches = (appData.matches || []).filter(m => m.id !== matchId);
-    broadcastData();
+    publishToCloud();
     populateAdminPanels();
     if (currentUser) renderDashboard();
     alert('ফলাফল নিষ্পত্তি সম্পন্ন হয়েছে!');
   }
 
+  initRealtimeSync();
   handleUrlAuth();
 </script>
 </body>
