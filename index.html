@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Velki Pro Cricket Exchange</title>
+  <title>Velki Pro Sports Exchange</title>
   <style>
     :root {
       --bg-dark: #07101e;
@@ -20,39 +20,40 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { background: var(--bg-dark); color: var(--text); padding-bottom: 90px; }
 
-    header { background: var(--header-bg); padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #233b63; }
-    .logo { font-weight: 900; color: var(--accent); font-size: 1.1rem; }
+    header { background: var(--header-bg); padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #233b63; position: sticky; top: 0; z-index: 50; }
+    .logo { font-weight: 900; color: var(--accent); font-size: 1.15rem; letter-spacing: 0.5px; }
     .user-badge { background: #0b1424; padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: bold; border: 1px solid #233b63; display: flex; align-items: center; gap: 8px; }
-    .logout-btn { background: var(--danger); border: none; color: #fff; font-size: 0.7rem; padding: 3px 7px; border-radius: 4px; cursor: pointer; }
+    .logout-btn { background: var(--danger); border: none; color: #fff; font-size: 0.7rem; padding: 3px 8px; border-radius: 4px; cursor: pointer; }
 
     .container { max-width: 680px; margin: 10px auto; padding: 0 10px; }
 
-    .cricket-banner { background: linear-gradient(90deg, #132747, #1e3a67); padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: bold; color: var(--accent); margin-bottom: 12px; border-left: 4px solid var(--accent); display: flex; justify-content: space-between; align-items: center; }
+    .cricket-banner { background: linear-gradient(90deg, #132747, #1e3a67); padding: 9px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: bold; color: var(--accent); margin-bottom: 12px; border-left: 4px solid var(--accent); display: flex; justify-content: space-between; align-items: center; }
 
-    .market-box { background: var(--card-bg); border-radius: 8px; overflow: hidden; margin-bottom: 15px; border: 1px solid #233b63; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
+    .market-box { background: var(--card-bg); border-radius: 8px; overflow: hidden; margin-bottom: 14px; border: 1px solid #233b63; box-shadow: 0 4px 6px rgba(0,0,0,0.25); }
     .market-header { background: #162642; padding: 10px 12px; font-size: 0.85rem; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
-    .live-dot { color: var(--success); font-size: 0.75rem; font-weight: bold; animation: blink 1.5s infinite; }
+    .live-dot { color: var(--success); font-size: 0.75rem; font-weight: bold; animation: blink 1.2s infinite; }
     @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
     
     .table-header { display: grid; grid-template-columns: 1fr 65px 65px; background: #0d1728; font-size: 0.75rem; font-weight: bold; text-align: center; }
     .table-header span { padding: 6px; }
 
     .market-row { display: grid; grid-template-columns: 1fr 65px 65px; border-top: 1px solid #1a2c4c; align-items: center; }
-    .team-cell { padding: 10px 12px; font-weight: 600; font-size: 0.9rem; }
+    .team-cell { padding: 12px 10px; font-weight: 600; font-size: 0.9rem; }
     
-    .odd-btn { border: none; height: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: background 0.3s; }
+    .odd-btn { border: none; height: 42px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: 0.15s; }
+    .odd-btn:active { transform: scale(0.96); }
     .odd-rate { font-weight: bold; font-size: 0.95rem; line-height: 1; }
     .odd-size { font-size: 0.65rem; color: #334155; margin-top: 2px; }
     .back { background: var(--back-blue); color: #000; }
     .lay { background: var(--lay-pink); color: #000; border-left: 1px solid rgba(0,0,0,0.1); }
 
-    .login-card { background: var(--card-bg); border-radius: 8px; padding: 20px; border: 1px solid #233b63; margin-top: 20px; }
-    .login-card h3 { color: var(--accent); margin-bottom: 12px; font-size: 1.1rem; text-align: center; }
+    .login-card { background: var(--card-bg); border-radius: 8px; padding: 22px; border: 1px solid #233b63; margin-top: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
+    .login-card h3 { color: var(--accent); margin-bottom: 8px; font-size: 1.15rem; text-align: center; }
 
-    #betslip { display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: #162642; border-top: 3px solid var(--accent); padding: 15px; z-index: 1000; box-shadow: 0 -4px 15px rgba(0,0,0,0.5); }
+    #betslip { display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: #162642; border-top: 3px solid var(--accent); padding: 15px; z-index: 1000; box-shadow: 0 -4px 20px rgba(0,0,0,0.6); }
     .betslip-inner { max-width: 680px; margin: 0 auto; }
-    .stake-group { display: flex; gap: 5px; margin: 10px 0; }
-    .stake-btn { flex: 1; padding: 6px; background: #07101e; border: 1px solid #233b63; color: #fff; border-radius: 4px; cursor: pointer; }
+    .stake-group { display: flex; gap: 6px; margin: 10px 0; }
+    .stake-btn { flex: 1; padding: 7px; background: #07101e; border: 1px solid #233b63; color: #fff; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 0.8rem; }
     .btn-action { width: 100%; padding: 10px; background: var(--accent); color: #000; font-weight: bold; border: none; border-radius: 4px; cursor: pointer; font-size: 0.95rem; }
 
     #admin-panel { display: none; background: #060c17; border: 2px solid var(--danger); border-radius: 8px; padding: 15px; margin-top: 25px; }
@@ -65,36 +66,35 @@
 <body>
 
 <header>
-  <div class="logo">VELKI CRICKET EXCHANGE</div>
+  <div class="logo">VELKI LIVE CRICKET</div>
   <div id="auth-header">
     <div class="user-badge" id="user-display" style="display:none;">
       <span>👤 <strong id="u-name">User</strong></span> | 
       <span>🪙 <strong id="u-bal">0</strong> Pts</span>
-      <button class="logout-btn" onclick="userLogout()">Exit</button>
+      <button class="logout-btn" onclick="userLogout()">Log out</button>
     </div>
   </div>
 </header>
 
 <div class="container">
 
-  <!-- Login Modal -->
+  <!-- লগইন সেকশন -->
   <div id="login-modal" class="login-card">
-    <h3>🏏 ক্রিকেট এক্সচেঞ্জ লগইন</h3>
-    <p style="font-size: 0.8rem; color: var(--muted); text-align: center; margin-bottom: 15px;">অ্যাডমিনের দেওয়া আইডি ও পাসওয়ার্ড দিন</p>
+    <h3>🏏 সুরক্ষিত ক্রিকেট এক্সচেঞ্জ লগইন</h3>
+    <p style="font-size: 0.8rem; color: var(--muted); text-align: center; margin-bottom: 15px;">অ্যাডমিনের দেওয়া আইডি ও পাসওয়ার্ড লিখুন</p>
     <input type="text" id="login-user" placeholder="ইউজার আইডি (Username)">
     <input type="password" id="login-pass" placeholder="পাসওয়ার্ড (Password)">
     <button class="btn-action" onclick="manualLogin()">লগইন করুন</button>
-    <div style="font-size: 0.75rem; color: var(--muted); text-align: center; margin-top: 10px;">ডিফল্ট ইউজার: <b>demo</b> | পাসওয়ার্ড: <b>1234</b></div>
   </div>
 
-  <!-- User Dashboard -->
+  <!-- ইউজার ড্যাশবোর্ড -->
   <div id="main-app" style="display: none;">
     <div class="cricket-banner">
-      <span>🏏 LIVE CRICKET IN-PLAY</span>
-      <span style="color:#22c55e;">● LIVE RATES</span>
+      <span>🏏 LIVE MATCHES (Admin Controlled)</span>
+      <span style="color:#22c55e;">● IN-PLAY LIVE</span>
     </div>
 
-    <!-- অ্যাডমিনের অ্যাড করা ম্যাচগুলো এখানে শো হবে -->
+    <!-- অ্যাডমিনের সেট করা ম্যাচগুলো এখানে দেখাবে -->
     <div id="match-container"></div>
 
     <div class="market-box" style="padding: 12px; margin-top: 20px;">
@@ -103,78 +103,72 @@
     </div>
   </div>
 
-  <!-- Admin Panel (Secret) -->
+  <!-- গোপন অ্যাডমিন প্যানেল -->
   <div id="admin-panel">
-    <h3 style="color: var(--danger); margin-bottom: 12px;">🔒 মাস্টার অ্যাডমিন পোর্টাল (Secret Control)</h3>
+    <h3 style="color: var(--danger); margin-bottom: 12px;">🔒 মাস্টার অ্যাডমিন পোর্টাল (Secret Dashboard)</h3>
     
     <!-- ১. হোয়াটসঅ্যাপ লিংক জেনারেটর -->
     <div class="admin-card">
-      <h4>১. বন্ধুর জন্য হোয়াটসঅ্যাপ লগইন লিংক তৈরি</h4>
+      <h4>১. বন্ধুর জন্য পারমানেন্ট লগইন লিংক তৈরি</h4>
       <input type="text" id="adm-new-user" placeholder="বন্ধুর ইউজারনেম (যেমন: rahul)">
       <input type="text" id="adm-new-pass" placeholder="পাসওয়ার্ড (যেমন: 1234)">
-      <input type="number" id="adm-new-bal" placeholder="স্টার্টিং কয়েন (যেমন: 10000)" value="10000">
+      <input type="number" id="adm-new-bal" placeholder="স্টার্টিং পয়েন্ট (যেমন: 10000)" value="10000">
       <button class="adm-btn" style="background:var(--success); color:#fff;" onclick="generateWhatsAppLink()">📲 হোয়াটসঅ্যাপের লিংক কপি করুন</button>
     </div>
 
-    <!-- ২. আনম্যাচ বেট ও ওডস ফ্ল্যাকচুয়েশন কন্ট্রোল -->
+    <!-- ২. আনম্যাচ রিজেক্ট বেট সুইচ -->
     <div class="admin-card">
-      <h4>২. বেট রিজেক্ট ও ওডস কন্ট্রোল সুইচ</h4>
-      <label style="font-size: 0.8rem; color: var(--muted); display: block; margin-bottom: 4px;">Unmatch Bet Mode (অন থাকলে ইউজার বেট প্লেস করতে পারবে না, রিজেক্ট হবে):</label>
+      <h4>২. বেট রিজেক্ট ও ওডস সিঙ্ক কন্ট্রোল</h4>
+      <label style="font-size: 0.8rem; color: var(--muted); display: block; margin-bottom: 4px;">বেট অ্যাকসেপ্ট / রিজেক্ট অপশন:</label>
       <select id="adm-reject-switch" onchange="toggleRejectMode()">
-        <option value="OFF">✅ স্বাভাবিক বেটিং মোড (Accept All Bets)</option>
-        <option value="ON">🚫 আনম্যাচ মোড (Reject Bets / Unmatched Rate)</option>
-      </select>
-
-      <label style="font-size: 0.8rem; color: var(--muted); display: block; margin-bottom: 4px; margin-top: 6px;">অটো ওডস ওঠানামা (Auto Fluctuation):</label>
-      <select id="adm-fluctuate-switch" onchange="toggleFluctuateMode()">
-        <option value="ON">⚡ লাইভ ওঠানামা অন (Auto Fluctuate)</option>
-        <option value="OFF">🛑 সম্পূর্ণ অ্যাডমিন ফিক্সড ওডস (Static Rate)</option>
+        <option value="OFF">✅ স্বাভাবিক মোড (Accept Bets)</option>
+        <option value="ON">🚫 বেট রিজেক্ট মোড (Reject All Bets / Unmatched)</option>
       </select>
     </div>
 
-    <!-- ৩. পয়েন্ট বাড়ানো / কমানো -->
+    <!-- ৩. পয়েন্ট কন্ট্রোল -->
     <div class="admin-card">
-      <h4>৩. পয়েন্ট কন্ট্রোল (Deposit / Withdraw)</h4>
+      <h4>৩. পয়েন্ট যোগ বা কর্তন (Deposit / Withdraw)</h4>
       <select id="adm-wallet-user-select"></select>
-      <input type="number" id="adm-wallet-amount" placeholder="পয়েন্টের পরিমাণ (যেমন: 2000)">
+      <input type="number" id="adm-wallet-amount" placeholder="পয়েন্টের পরিমাণ">
       <div style="display: flex; gap: 8px;">
         <button class="adm-btn" style="background:#22c55e; color:#fff;" onclick="adminUpdateWallet('ADD')">➕ পয়েন্ট যোগ</button>
         <button class="adm-btn" style="background:#ef4444; color:#fff;" onclick="adminUpdateWallet('REMOVE')">➖ পয়েন্ট কর্তন</button>
       </div>
     </div>
 
-    <!-- ৪. নতুন ক্রিকেট ম্যাচ অ্যাড (সর্বোচ্চ ৫+ ম্যাচ) -->
+    <!-- ৪. নতুন ম্যাচ অ্যাড (সর্বোচ্চ ৬ ম্যাচ) -->
     <div class="admin-card">
-      <h4>৪. নতুন ক্রিকেট ম্যাচ অ্যাড করুন</h4>
-      <input type="text" id="adm-tour" placeholder="টুর্নামেন্ট (যেমন: IPL 2026 / T20 World Cup)">
+      <h4>৪. নতুন ক্রিকেট ম্যাচ যুক্ত করুন (Max 6 Matches)</h4>
+      <input type="text" id="adm-tour" placeholder="টুর্নামেন্ট (যেমন: IPL 2026 / T20 Cup)">
       <input type="text" id="adm-t1" placeholder="টিম ১ (যেমন: India)">
       <input type="number" step="0.01" id="adm-t1-odds" placeholder="টিম ১ Back Rate (যেমন: 1.85)">
       <input type="text" id="adm-t2" placeholder="টিম ২ (যেমন: Pakistan)">
       <input type="number" step="0.01" id="adm-t2-odds" placeholder="টিম ২ Back Rate (যেমন: 2.10)">
-      <button class="adm-btn" style="background:#3b82f6; color:#fff;" onclick="adminAddMatch()">+ ক্রিকেট ম্যাচ লাইভ করুন</button>
+      <button class="adm-btn" style="background:#3b82f6; color:#fff;" onclick="adminAddMatch()">+ ম্যাচ লাইভ করুন</button>
     </div>
 
-    <!-- ৫. নির্দিষ্ট ম্যাচের ওডস পরিবর্তন / ডিলিট -->
+    <!-- ৫. বিদ্যমান ম্যাচের ওডস এডিট বা ম্যাচ মোছা -->
     <div class="admin-card">
-      <h4>৫. বিদ্যমান ম্যাচের ওডস এডিট বা ডিলিট করুন</h4>
+      <h4>৫. ম্যাচের ওডস তাৎক্ষণিক পরিবর্তন / ম্যাচ মুছুন</h4>
       <select id="adm-edit-match-select" onchange="loadMatchOddsToEdit()"></select>
       <div style="display: flex; gap: 8px;">
         <input type="number" step="0.01" id="adm-edit-t1-odds" placeholder="টিম ১ ওডস">
         <input type="number" step="0.01" id="adm-edit-t2-odds" placeholder="টিম ২ ওডস">
       </div>
       <div style="display: flex; gap: 8px;">
-        <button class="adm-btn" style="background:#22c55e; color:#fff;" onclick="adminSaveEditedOdds()">💾 ওডস আপডেট</button>
+        <button class="adm-btn" style="background:#22c55e; color:#fff;" onclick="adminSaveEditedOdds()">💾 ওডস লাইভ আপডেট</button>
         <button class="adm-btn" style="background:var(--danger); color:#fff;" onclick="adminDeleteMatch()">🗑️ ম্যাচ মুছুন</button>
       </div>
     </div>
 
-    <!-- ৬. ম্যাচের ফলাফল নিষ্পত্তি -->
+    <!-- ৬. ফলাফল নিষ্পত্তি -->
     <div class="admin-card">
       <h4>৬. ক্রিকেট ম্যাচের ফলাফল ঘোষণা (Settlement)</h4>
       <select id="adm-settle-match"></select>
       <select id="adm-winner-select">
-        <option value="1">টিম ১ জিতেছে</option>
-        <option value="2">টিম ২ জিতেছে</option>
+        <option value="1">টিম ১ জয়ী</option>
+        <option value="2">টিম ২ জয়ী</option>
       </select>
       <button class="adm-btn" style="background:var(--accent); color:#000;" onclick="adminSettleMatch()">ফলাফল ঘোষণা করুন</button>
     </div>
@@ -182,7 +176,7 @@
 
 </div>
 
-<!-- Bet Slip -->
+<!-- Bet Slip Modal -->
 <div id="betslip">
   <div class="betslip-inner">
     <div style="display:flex; justify-content:space-between; margin-bottom: 6px;">
@@ -203,38 +197,35 @@
 </div>
 
 <script>
-  // ৫টি ইনিশিয়াল ক্রিকেট ম্যাচ
-  let defaultMatches = [
-    { id: 1, tour: "IPL 2026", t1: "Kolkata Knight Riders", t2: "Mumbai Indians", t1_b: 1.88, t1_l: 1.90, t2_b: 2.02, t2_l: 2.06 },
-    { id: 2, tour: "T20 World Cup", t1: "India", t2: "Australia", t1_b: 1.75, t1_l: 1.77, t2_b: 2.20, t2_l: 2.24 },
-    { id: 3, tour: "IPL 2026", t1: "Chennai Super Kings", t2: "Royal Challengers Bengaluru", t1_b: 1.92, t1_l: 1.94, t2_b: 1.96, t2_l: 2.00 },
-    { id: 4, tour: "Big Bash League", t1: "Sydney Sixers", t2: "Perth Scorchers", t1_b: 2.10, t1_l: 2.14, t2_b: 1.80, t2_l: 1.82 },
-    { id: 5, tour: "International T20", t1: "England", t2: "South Africa", t1_b: 1.85, t1_l: 1.87, t2_b: 2.05, t2_l: 2.09 }
-  ];
-
-  let defaultUsers = {
-    "admin": { pass: "admin123", balance: 50000 },
-    "demo": { pass: "1234", balance: 10000 }
-  };
-
+  // মাস্টার স্টেট ও ডেটা স্ট্রাকচার
   let appData = {
-    users: JSON.parse(localStorage.getItem('v6_users')) || defaultUsers,
-    matches: JSON.parse(localStorage.getItem('v6_matches')) || defaultMatches,
-    bets: JSON.parse(localStorage.getItem('v6_bets')) || [],
-    rejectMode: localStorage.getItem('v6_reject_mode') || 'OFF',
-    fluctuateMode: localStorage.getItem('v6_fluctuate_mode') || 'ON'
+    users: JSON.parse(localStorage.getItem('vk_cloud_users')) || { "demo": { pass: "1234", balance: 10000 } },
+    matches: JSON.parse(localStorage.getItem('vk_cloud_matches')) || [
+      { id: 1, tour: "IPL 2026", t1: "Kolkata Knight Riders", t2: "Mumbai Indians", t1_b: 1.88, t1_l: 1.90, t2_b: 2.02, t2_l: 2.06 },
+      { id: 2, tour: "T20 World Cup", t1: "India", t2: "Australia", t1_b: 1.75, t1_l: 1.77, t2_b: 2.20, t2_l: 2.24 }
+    ],
+    bets: JSON.parse(localStorage.getItem('vk_cloud_bets')) || [],
+    rejectMode: localStorage.getItem('vk_cloud_reject') || 'OFF'
   };
 
-  let currentUser = localStorage.getItem('v6_active_user') || null;
+  let currentUser = localStorage.getItem('vk_active_session') || null;
   let activeBet = null;
 
-  function saveStorage() {
-    localStorage.setItem('v6_users', JSON.stringify(appData.users));
-    localStorage.setItem('v6_matches', JSON.stringify(appData.matches));
-    localStorage.setItem('v6_bets', JSON.stringify(appData.bets));
-    localStorage.setItem('v6_reject_mode', appData.rejectMode);
-    localStorage.setItem('v6_fluctuate_mode', appData.fluctuateMode);
+  function persistData() {
+    localStorage.setItem('vk_cloud_users', JSON.stringify(appData.users));
+    localStorage.setItem('vk_cloud_matches', JSON.stringify(appData.matches));
+    localStorage.setItem('vk_cloud_bets', JSON.stringify(appData.bets));
+    localStorage.setItem('vk_cloud_reject', appData.rejectMode);
   }
+
+  // ক্রসব্রাউজার ইনস্ট্যান্ট অটো-সিঙ্ক (ম্যাজিক সিঙ্ক ও ব্রডকাস্ট লুপ)
+  window.addEventListener('storage', (e) => {
+    appData.users = JSON.parse(localStorage.getItem('vk_cloud_users')) || appData.users;
+    appData.matches = JSON.parse(localStorage.getItem('vk_cloud_matches')) || appData.matches;
+    appData.bets = JSON.parse(localStorage.getItem('vk_cloud_bets')) || appData.bets;
+    appData.rejectMode = localStorage.getItem('vk_cloud_reject') || 'OFF';
+    if (currentUser) renderDashboard();
+  });
 
   // URL Magic Auth
   function handleUrlAuth() {
@@ -244,10 +235,14 @@
     const b = params.get('b');
 
     if (u && p) {
-      appData.users[u] = { pass: p, balance: parseFloat(b) || 10000 };
-      saveStorage();
+      if (!appData.users[u]) {
+        appData.users[u] = { pass: p, balance: parseFloat(b) || 10000 };
+      } else {
+        appData.users[u].pass = p;
+      }
+      persistData();
       currentUser = u;
-      localStorage.setItem('v6_active_user', currentUser);
+      localStorage.setItem('vk_active_session', currentUser);
       window.history.replaceState({}, document.title, window.location.pathname);
       initDashboard();
       return;
@@ -256,7 +251,6 @@
     if (window.location.hash === '#secretadmin') {
       document.getElementById('admin-panel').style.display = 'block';
       document.getElementById('adm-reject-switch').value = appData.rejectMode;
-      document.getElementById('adm-fluctuate-switch').value = appData.fluctuateMode;
       populateAdminDropdowns();
     }
 
@@ -274,13 +268,13 @@
     }
 
     currentUser = u;
-    localStorage.setItem('v6_active_user', currentUser);
+    localStorage.setItem('vk_active_session', currentUser);
     initDashboard();
   }
 
   function userLogout() {
     currentUser = null;
-    localStorage.removeItem('v6_active_user');
+    localStorage.removeItem('vk_active_session');
     document.getElementById('main-app').style.display = 'none';
     document.getElementById('user-display').style.display = 'none';
     document.getElementById('login-modal').style.display = 'block';
@@ -301,13 +295,12 @@
     renderOpenBets();
   }
 
-  // ইউজারের স্ক্রিনে ম্যাচ রেন্ডার (শুধু অ্যাডমিনের অ্যাড করা ম্যাচগুলোই দেখাবে)
   function renderMatches() {
     const cont = document.getElementById('match-container');
     cont.innerHTML = '';
 
     if (appData.matches.length === 0) {
-      cont.innerHTML = '<div style="text-align:center; padding:30px; color:var(--muted);">বর্তমানে কোনো লাইভ ক্রিকেট ম্যাচ নেই।</div>';
+      cont.innerHTML = '<div style="text-align:center; padding:35px; color:var(--muted);">বর্তমানে কোনো লাইভ ক্রিকেট ম্যাচ নেই। অ্যাডমিন ম্যাচ যুক্ত করলে এখানে দেখতে পাবেন।</div>';
       return;
     }
 
@@ -346,26 +339,6 @@
     });
   }
 
-  // ওডস ফ্ল্যাকচুয়েশন ইঞ্জিন (অ্যাডমিনের সেটিংস অনুযায়ী)
-  setInterval(() => {
-    if (appData.matches.length === 0 || appData.fluctuateMode === 'OFF') return;
-    
-    appData.matches.forEach(m => {
-      const shift = (Math.random() > 0.5 ? 1 : -1) * (Math.floor(Math.random() * 3) + 1) / 100;
-      let newT1B = parseFloat((m.t1_b + shift).toFixed(2));
-      
-      if (newT1B > 1.10 && newT1B < 5.50) {
-        m.t1_b = newT1B;
-        m.t1_l = parseFloat((newT1B + 0.02).toFixed(2));
-        m.t2_b = parseFloat(( (1 / (1 - (1/m.t1_b))) * 0.96 ).toFixed(2));
-        m.t2_l = parseFloat((m.t2_b + 0.04).toFixed(2));
-      }
-    });
-
-    saveStorage();
-    if (currentUser) renderMatches();
-  }, 3500);
-
   function openSlip(matchId, teamNum, team, type, odds) {
     activeBet = { matchId, teamNum, team, type, odds };
     document.getElementById('slip-title').innerText = `${team} (${type})`;
@@ -382,19 +355,20 @@
     document.getElementById('betslip').style.display = 'none';
   }
 
-  // বেট কনফার্মেশন (Unmatch Check সহ)
+  // তাৎক্ষণিক বেট প্লেস ও আনম্যাচ রিজেক্ট হ্যান্ডলিং
   function confirmBet() {
     const stake = parseFloat(document.getElementById('slip-amount').value);
     if (!stake || stake <= 0 || stake > appData.users[currentUser].balance) {
-      return alert('পর্যাপ্ত পয়েন্ট নেই বা ভুল ইনপুট!');
+      return alert('পর্যাপ্ত ব্যালেন্স নেই বা ভুল ইনপুট দিয়েছেন!');
     }
 
-    // অ্যাডমিন আনম্যাচ রিজেক্ট অপশন অন রাখলে বেট বাতিল হবে
+    // অ্যাডমিন আনম্যাচ রিজেক্ট অন রাখলে
     if (appData.rejectMode === 'ON') {
       closeSlip();
-      return alert('⚠️ Unmatched Bet / Rate Suspended! আপনার বেটটি মার্কেটের সাথে ম্যাচ করেনি, দয়া করে আবার চেষ্টা করুন।');
+      return alert('⚠️ Unmatched Bet / Market Suspended! রেট পরিবর্তন হওয়ার কারণে বেটটি বাতিল করা হয়েছে।');
     }
 
+    // সঙ্গে সঙ্গে পয়েন্ট কাটা
     appData.users[currentUser].balance -= stake;
     appData.bets.push({
       id: Date.now(),
@@ -408,7 +382,7 @@
       status: 'OPEN'
     });
 
-    saveStorage();
+    persistData();
     closeSlip();
     renderDashboard();
     alert('✅ বেট সফলভাবে প্লেস করা হয়েছে!');
@@ -418,7 +392,7 @@
     const list = document.getElementById('bets-list');
     const myBets = appData.bets.filter(b => b.user === currentUser && b.status === 'OPEN');
     if (myBets.length === 0) {
-      list.innerHTML = '<small style="color: var(--muted);">কোনো বেট সক্রিয় নেই</small>';
+      list.innerHTML = '<small style="color: var(--muted);">কোনো বেট ধরা নেই</small>';
     } else {
       list.innerHTML = myBets.map(b => `
         <div style="display:flex; justify-content:space-between; font-size:0.85rem; padding:6px 0; border-bottom:1px solid #1a2c4c;">
@@ -429,17 +403,11 @@
     }
   }
 
-  /* Admin Control Functions */
+  /* Admin Dashboard Actions */
   function toggleRejectMode() {
     appData.rejectMode = document.getElementById('adm-reject-switch').value;
-    saveStorage();
+    persistData();
     alert(`Unmatch Bet Mode এখন: ${appData.rejectMode}`);
-  }
-
-  function toggleFluctuateMode() {
-    appData.fluctuateMode = document.getElementById('adm-fluctuate-switch').value;
-    saveStorage();
-    alert(`অটো ওডস ওঠানামা এখন: ${appData.fluctuateMode}`);
   }
 
   function generateWhatsAppLink() {
@@ -447,17 +415,17 @@
     const p = document.getElementById('adm-new-pass').value.trim();
     const b = document.getElementById('adm-new-bal').value || 10000;
 
-    if (!u || !p) return alert('ইউজারনেম ও পাসওয়ার্ড দিন!');
+    if (!u || !p) return alert('ইউজারনেম ও পাসওয়ার্ড লিখুন!');
 
     appData.users[u] = { pass: p, balance: parseFloat(b) };
-    saveStorage();
+    persistData();
     populateAdminDropdowns();
 
     const base = window.location.origin + window.location.pathname;
     const directLink = `${base}?u=${encodeURIComponent(u)}&p=${encodeURIComponent(p)}&b=${b}`;
 
     navigator.clipboard.writeText(directLink);
-    alert(`লগইন লিংক কপি হয়েছে!\n\n${directLink}\n\nহোয়াটসঅ্যাপে এই লিংকটি বন্ধুকে পাঠান। সে ক্লিক করলেই সরাসরি তার অ্যাকাউন্টে লগইন হয়ে যাবে!`);
+    alert(`লগইন লিংক কপি হয়েছে!\n\n${directLink}\n\nলিংকটি বন্ধুকে পাঠান, সে ক্লিক করলেই ইনস্ট্যান্ট লগইন হয়ে যাবে!`);
   }
 
   function populateAdminDropdowns() {
@@ -490,43 +458,27 @@
       const o2 = parseFloat(document.getElementById('adm-edit-t2-odds').value);
       if (o1) { m.t1_b = o1; m.t1_l = parseFloat((o1 + 0.02).toFixed(2)); }
       if (o2) { m.t2_b = o2; m.t2_l = parseFloat((o2 + 0.04).toFixed(2)); }
-      saveStorage();
+      persistData();
       renderMatches();
-      alert('ম্যাচের ওডস সফলভাবে আপডেট করা হয়েছে!');
+      alert('ওডস তাৎক্ষণিকভাবে আপডেট হয়েছে!');
     }
   }
 
   function adminDeleteMatch() {
     const selId = parseInt(document.getElementById('adm-edit-match-select').value);
-    if (!confirm('আপনি কি নিশ্চিত এই ম্যাচটি মুছে ফেলতে চান?')) return;
+    if (!confirm('আপনি কি ম্যাচটি মুছে ফেলতে চান?')) return;
     appData.matches = appData.matches.filter(m => m.id !== selId);
-    saveStorage();
+    persistData();
     populateAdminDropdowns();
     renderMatches();
-    alert('ম্যাচটি সফলভাবে মুছে ফেলা হয়েছে!');
-  }
-
-  function adminUpdateWallet(action) {
-    const targetUser = document.getElementById('adm-wallet-user-select').value;
-    const amount = parseFloat(document.getElementById('adm-wallet-amount').value);
-
-    if (!amount || amount <= 0) return alert('সঠিক পয়েন্ট দিন!');
-
-    if (action === 'ADD') {
-      appData.users[targetUser].balance += amount;
-      alert(`${targetUser}-এর অ্যাকাউন্টে ${amount} পয়েন্ট যোগ হয়েছে!`);
-    } else {
-      if (appData.users[targetUser].balance < amount) return alert('ইউজারের পর্যাপ্ত ব্যালেন্স নেই!');
-      appData.users[targetUser].balance -= amount;
-      alert(`${targetUser}-এর অ্যাকাউন্ট থেকে ${amount} পয়েন্ট কেটে নেওয়া হয়েছে!`);
-    }
-
-    saveStorage();
-    populateAdminDropdowns();
-    if (currentUser === targetUser) renderDashboard();
+    alert('ম্যাচটি সরানো হয়েছে!');
   }
 
   function adminAddMatch() {
+    if (appData.matches.length >= 6) {
+      return alert('সর্বোচ্চ ৬টি ম্যাচ একসাথে চালানো সম্ভব! আগে কোনো পুরনো ম্যাচ ডিলিট করুন।');
+    }
+
     const tour = document.getElementById('adm-tour').value || 'Cricket Match';
     const t1 = document.getElementById('adm-t1').value || 'Team 1';
     const t2 = document.getElementById('adm-t2').value || 'Team 2';
@@ -540,10 +492,30 @@
       t2_b, t2_l: parseFloat((t2_b + 0.04).toFixed(2))
     });
 
-    saveStorage();
+    persistData();
     populateAdminDropdowns();
     renderMatches();
-    alert('নতুন ক্রিকেট ম্যাচ লাইভ হয়েছে!');
+    alert('নতুন ক্রিকেট ম্যাচ লাইভ করা হয়েছে!');
+  }
+
+  function adminUpdateWallet(action) {
+    const targetUser = document.getElementById('adm-wallet-user-select').value;
+    const amount = parseFloat(document.getElementById('adm-wallet-amount').value);
+
+    if (!amount || amount <= 0) return alert('সঠিক পয়েন্ট লিখুন!');
+
+    if (action === 'ADD') {
+      appData.users[targetUser].balance += amount;
+      alert(`${targetUser}-এর অ্যাকাউন্টে ${amount} পয়েন্ট যোগ করা হয়েছে!`);
+    } else {
+      if (appData.users[targetUser].balance < amount) return alert('ইউজারের পর্যাপ্ত ব্যালেন্স নেই!');
+      appData.users[targetUser].balance -= amount;
+      alert(`${targetUser}-এর অ্যাকাউন্ট থেকে ${amount} পয়েন্ট কেটে নেওয়া হয়েছে!`);
+    }
+
+    persistData();
+    populateAdminDropdowns();
+    if (currentUser === targetUser) renderDashboard();
   }
 
   function adminSettleMatch() {
@@ -561,10 +533,10 @@
     });
 
     appData.matches = appData.matches.filter(m => m.id !== matchId);
-    saveStorage();
+    persistData();
     populateAdminDropdowns();
     if (currentUser) renderDashboard();
-    alert('ফলাফল নিষ্পত্তি সম্পন্ন এবং পয়েন্ট অ্যাকাউন্টে সমন্বয় হয়েছে!');
+    alert('ম্যাচের ফলাফল নিষ্পত্তি হয়েছে এবং ব্যালেন্স সমন্বয় করা হয়েছে!');
   }
 
   handleUrlAuth();
