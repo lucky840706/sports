@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Velki Live Exchange</title>
+  <style>
+    :root {
+      --bg-dark: #0e1a2f;
+      --panel-bg: #152540;
+      --header-bg: #1f365d;
+      --accent-yellow: #ffb80c;
+      --back-blue: #72bbef;
+      --lay-pink: #faa9ba;
+      --text-white: #ffffff;
+      --text-muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background: var(--bg-dark); color: var(--text-white); padding-bottom: 50px; }
+
+    /* Top Navbar */
+    header { background: var(--header-bg); padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #284474; }
+    .logo { font-weight: 900; color: var(--accent-yellow); font-size: 1.1rem; letter-spacing: 0.5px; }
+    .user-badge { background: #0b1528; padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: bold; border: 1px solid #284474; }
+
+    .container { max-width: 650px; margin: 12px auto; padding: 0 8px; }
+
+    /* Match Info Header */
+    .match-banner { background: var(--panel-bg); border-radius: 8px; padding: 15px; margin-bottom: 10px; border-left: 4px solid var(--accent-yellow); }
+    .match-title { font-size: 1.1rem; font-weight: bold; margin-bottom: 4px; }
+    .match-meta { font-size: 0.75rem; color: var(--text-muted); }
+
+    /* Exchange Odds Table */
+    .market-box { background: var(--panel-bg); border-radius: 8px; overflow: hidden; margin-bottom: 15px; border: 1px solid #284474; }
+    .market-header { background: #1b2f52; padding: 8px 12px; font-size: 0.85rem; font-weight: bold; display: flex; justify-content: space-between; }
+    
+    .table-header { display: grid; grid-template-columns: 1fr 65px 65px; background: #111e35; font-size: 0.75rem; font-weight: bold; text-align: center; }
+    .table-header span { padding: 6px; }
+
+    .market-row { display: grid; grid-template-columns: 1fr 65px 65px; border-top: 1px solid #20355a; align-items: center; }
+    .team-cell { padding: 12px 10px; font-weight: 600; font-size: 0.9rem; }
+    
+    .odd-btn { border: none; height: 42px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: 0.1s; }
+    .odd-btn:active { transform: scale(0.95); }
+    .odd-rate { font-weight: bold; font-size: 0.95rem; line-height: 1; }
+    .odd-size { font-size: 0.65rem; color: #334155; margin-top: 2px; }
+    .back { background: var(--back-blue); color: #000; }
+    .lay { background: var(--lay-pink); color: #000; border-left: 1px solid rgba(0,0,0,0.1); }
+
+    /* Betslip Modal */
+    #betslip { display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: #1b2f52; border-top: 3px solid var(--accent-yellow); padding: 15px; box-shadow: 0 -4px 15px rgba(0,0,0,0.5); z-index: 100; }
+    .betslip-inner { max-width: 650px; margin: 0 auto; }
+    .stake-btn-group { display: flex; gap: 5px; margin: 10px 0; }
+    .stake-btn { flex: 1; padding: 6px; background: #0e1a2f; border: 1px solid #284474; color: #fff; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
+    .place-btn { width: 100%; padding: 10px; background: var(--accent-yellow); color: #000; font-weight: bold; border: none; border-radius: 4px; cursor: pointer; }
+
+    /* Open Bets Section */
+    .bets-box { background: var(--panel-bg); border-radius: 8px; padding: 12px; margin-top: 15px; border: 1px solid #284474; }
+    .bet-item { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 8px 0; border-bottom: 1px solid #20355a; }
+
+    /* Hidden Admin Panel */
+    #admin-panel { display: none; background: #070e1c; border: 2px solid #ef4444; border-radius: 8px; padding: 15px; margin-top: 25px; }
+    .admin-input { width: 100%; padding: 8px; margin-bottom: 8px; background: #152540; border: 1px solid #284474; color: #fff; border-radius: 4px; }
+    .adm-btn { width: 100%; padding: 8px; font-weight: bold; border: none; border-radius: 4px; cursor: pointer; margin-top: 4px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">VELKI EXCHANGE</div>
+  <div id="auth-area">
+    <div class="user-badge" id="user-display">👤 <span id="u-name">Guest</span> | 🪙 <span id="u-bal">0</span> Pts</div>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- Login Card -->
+  <div id="login-modal" class="market-box" style="padding: 15px;">
+    <h3 style="margin-bottom: 10px; font-size: 1rem; color: var(--accent-yellow);">ইউজার আইডি দিয়ে লগইন করুন</h3>
+    <input type="text" id="login-input" class="admin-input" placeholder="অ্যাডমিনের দেওয়া ইউজারনেম দিন">
+    <button class="place-btn" onclick="userLogin()">খেলুন</button>
+  </div>
+
+  <!-- Main Exchange View -->
+  <div id="main-app" style="display: none;">
+    <div class="match-banner">
+      <div class="match-title" id="m-title">India vs Pakistan</div>
+      <div class="match-meta"><span id="m-sport">Cricket</span> • <span style="color:#22c55e;">● Live In-Play</span></div>
+    </div>
+
+    <div class="market-box">
+      <div class="market-header">
+        <span>MATCH ODDS</span>
+        <span style="color: var(--accent-yellow); font-size: 0.75rem;">Max: 50,000</span>
+      </div>
+      <div class="table-header">
+        <span style="text-align: left; padding-left: 10px;">SELECTIONS</span>
+        <span style="background: var(--back-blue); color: #000;">BACK</span>
+        <span style="background: var(--lay-pink); color: #000;">LAY</span>
+      </div>
+
+      <div class="market-row">
+        <div class="team-cell" id="t1-name">India</div>
+        <button class="odd-btn back" onclick="openSlip(1, 'Back')">
+          <span class="odd-rate" id="t1-back">1.85</span>
+          <span class="odd-size">1.2M</span>
+        </button>
+        <button class="odd-btn lay" onclick="openSlip(1, 'Lay')">
+          <span class="odd-rate" id="t1-lay">1.87</span>
+          <span class="odd-size">800K</span>
+        </button>
+      </div>
+
+      <div class="market-row">
+        <div class="team-cell" id="t2-name">Pakistan</div>
+        <button class="odd-btn back" onclick="openSlip(2, 'Back')">
+          <span class="odd-rate" id="t2-back">2.10</span>
+          <span class="odd-size">950K</span>
+        </button>
+        <button class="odd-btn lay" onclick="openSlip(2, 'Lay')">
+          <span class="odd-rate" id="t2-lay">2.14</span>
+          <span class="odd-size">450K</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="bets-box">
+      <h4 style="font-size: 0.85rem; color: var(--accent-yellow); margin-bottom: 8px;">আমার সক্রিয় বেট (Active Predictions)</h4>
+      <div id="bets-list"><small style="color: var(--text-muted);">কোনো বেট ধরা হয়নি</small></div>
+    </div>
+  </div>
+
+  <!-- Hidden Admin Panel -->
+  <div id="admin-panel">
+    <h3 style="color: #ef4444; margin-bottom: 10px;">🔒 গোপন অ্যাডমিন ড্যাশবোর্ড</h3>
+    
+    <div style="margin-bottom: 12px; border-bottom: 1px solid #20355a; padding-bottom: 10px;">
+      <label style="font-size:0.75rem; color:var(--text-muted);">১. বন্ধুর আইডি ও পয়েন্ট তৈরি</label>
+      <input type="text" id="adm-user" class="admin-input" placeholder="বন্ধুর ইউজার আইডি">
+      <input type="number" id="adm-coins" class="admin-input" placeholder="ভার্চুয়াল পয়েন্ট (যেমন: 10000)">
+      <button class="adm-btn" style="background:#22c55e; color:#fff;" onclick="adminAddUser()">আইডি সেভ করুন</button>
+    </div>
+
+    <div style="margin-bottom: 12px; border-bottom: 1px solid #20355a; padding-bottom: 10px;">
+      <label style="font-size:0.75rem; color:var(--text-muted);">২. খেলার নাম ও ওডস বদলান</label>
+      <input type="text" id="adm-sport-in" class="admin-input" placeholder="খেলার নাম">
+      <input type="text" id="adm-t1-in" class="admin-input" placeholder="টিম ১">
+      <input type="number" step="0.01" id="adm-t1b-in" class="admin-input" placeholder="টিম ১ Back Rate">
+      <input type="text" id="adm-t2-in" class="admin-input" placeholder="টিম ২">
+      <input type="number" step="0.01" id="adm-t2b-in" class="admin-input" placeholder="টিম ২ Back Rate">
+      <button class="adm-btn" style="background:#3b82f6; color:#fff;" onclick="adminUpdateRates()">ওডস আপডেট করুন</button>
+    </div>
+
+    <div>
+      <label style="font-size:0.75rem; color:var(--text-muted);">৩. ফলাফল ঘোষণা (জিতলে পয়েন্ট যোগ, হারলে বিয়োগ)</label>
+      <select id="adm-winner" class="admin-input">
+        <option value="1">টিম ১ জয়ী ঘোষণা করুন</option>
+        <option value="2">টিম ২ জয়ী ঘোষণা করুন</option>
+      </select>
+      <button class="adm-btn" style="background:#f59e0b; color:#000;" onclick="adminSettleMatch()">ম্যাচ নিষ্পত্তি করুন</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- Bet Slip Bottom Sheet -->
+<div id="betslip">
+  <div class="betslip-inner">
+    <div style="display:flex; justify-content:space-between; margin-bottom: 6px;">
+      <strong id="slip-title">India (Back)</strong>
+      <span style="color:var(--accent-yellow); font-weight:bold;" id="slip-odds">@ 1.85</span>
+    </div>
+    <input type="number" id="slip-amount" class="admin-input" placeholder="পয়েন্ট পরিমাণ" value="500">
+    <div class="stake-btn-group">
+      <button class="stake-btn" onclick="setStake(500)">+500</button>
+      <button class="stake-btn" onclick="setStake(1000)">+1000</button>
+      <button class="stake-btn" onclick="setStake(5000)">+5000</button>
+    </div>
+    <div style="display:flex; gap:6px;">
+      <button class="place-btn" style="background:#64748b; color:#fff;" onclick="closeSlip()">বাতিল</button>
+      <button class="place-btn" onclick="confirmBet()">কনফার্ম বেট</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let appData = {
+    users: JSON.parse(localStorage.getItem('velki_users')) || { "friend1": { balance: 10000 } },
+    match: JSON.parse(localStorage.getItem('velki_match')) || {
+      sport: "Cricket - IPL",
+      t1: "India",
+      t2: "Pakistan",
+      t1_back: 1.85,
+      t1_lay: 1.87,
+      t2_back: 2.10,
+      t2_lay: 2.14
+    },
+    bets: JSON.parse(localStorage.getItem('velki_bets')) || []
+  };
+
+  let currentUser = null;
+  let activeBetData = null;
+
+  function syncStorage() {
+    localStorage.setItem('velki_users', JSON.stringify(appData.users));
+    localStorage.setItem('velki_match', JSON.stringify(appData.match));
+    localStorage.setItem('velki_bets', JSON.stringify(appData.bets));
+  }
+
+  function checkAdminAccess() {
+    if (window.location.hash === '#secretadmin') {
+      document.getElementById('admin-panel').style.display = 'block';
+    }
+  }
+  window.onhashchange = checkAdminAccess;
+  checkAdminAccess();
+
+  function userLogin() {
+    const username = document.getElementById('login-input').value.trim();
+    if (!appData.users[username]) {
+      return alert('ভুল ইউজার আইডি! অ্যাডমিনের কাছে আইডি চান।');
+    }
+    currentUser = username;
+    document.getElementById('login-modal').style.display = 'none';
+    document.getElementById('main-app').style.display = 'block';
+    updateUI();
+  }
+
+  function updateUI() {
+    if (!currentUser) return;
+    document.getElementById('u-name').innerText = currentUser;
+    document.getElementById('u-bal').innerText = appData.users[currentUser].balance;
+
+    document.getElementById('m-sport').innerText = appData.match.sport;
+    document.getElementById('m-title').innerText = `${appData.match.t1} vs ${appData.match.t2}`;
+    document.getElementById('t1-name').innerText = appData.match.t1;
+    document.getElementById('t2-name').innerText = appData.match.t2;
+    document.getElementById('t1-back').innerText = appData.match.t1_back;
+    document.getElementById('t1-lay').innerText = appData.match.t1_lay;
+    document.getElementById('t2-back').innerText = appData.match.t2_back;
+    document.getElementById('t2-lay').innerText = appData.match.t2_lay;
+
+    const list = document.getElementById('bets-list');
+    const myBets = appData.bets.filter(b => b.user === currentUser && b.status === 'OPEN');
+    if (myBets.length === 0) {
+      list.innerHTML = '<small style="color: var(--text-muted);">কোনো সক্রিয় বেট নেই</small>';
+    } else {
+      list.innerHTML = myBets.map(b => `
+        <div class="bet-item">
+          <span>${b.team} (${b.type}) @ ${b.odds}</span>
+          <span style="color:var(--accent-yellow); font-weight:bold;">${b.stake} Pts</span>
+        </div>
+      `).join('');
+    }
+  }
+
+  function openSlip(teamNum, type) {
+    if (!currentUser) return;
+    const team = teamNum === 1 ? appData.match.t1 : appData.match.t2;
+    const odds = teamNum === 1 
+      ? (type === 'Back' ? appData.match.t1_back : appData.match.t1_lay)
+      : (type === 'Back' ? appData.match.t2_back : appData.match.t2_lay);
+
+    activeBetData = { teamNum, team, type, odds };
+    document.getElementById('slip-title').innerText = `${team} (${type})`;
+    document.getElementById('slip-odds').innerText = `@ ${odds}`;
+    document.getElementById('betslip').style.display = 'block';
+  }
+
+  function setStake(amount) {
+    const cur = parseFloat(document.getElementById('slip-amount').value) || 0;
+    document.getElementById('slip-amount').value = cur + amount;
+  }
+
+  function closeSlip() {
+    document.getElementById('betslip').style.display = 'none';
+  }
+
+  function confirmBet() {
+    const stake = parseFloat(document.getElementById('slip-amount').value);
+    if (!stake || stake <= 0 || stake > appData.users[currentUser].balance) {
+      return alert('পর্যাপ্ত পয়েন্ট নেই বা ভুল ইনপুট!');
+    }
+
+    appData.users[currentUser].balance -= stake;
+    appData.bets.push({
+      id: Date.now(),
+      user: currentUser,
+      teamNum: activeBetData.teamNum,
+      team: activeBetData.team,
+      type: activeBetData.type,
+      odds: activeBetData.odds,
+      stake: stake,
+      status: 'OPEN'
+    });
+
+    syncStorage();
+    closeSlip();
+    updateUI();
+    alert('বেট সফলভাবে প্লেস করা হয়েছে!');
+  }
+
+  function adminAddUser() {
+    const u = document.getElementById('adm-user').value.trim();
+    const c = parseFloat(document.getElementById('adm-coins').value) || 5000;
+    if (!u) return alert('আইডি দিন');
+    appData.users[u] = { balance: c };
+    syncStorage();
+    alert(`ইউজার ${u} তৈরি হয়েছে (${c} পয়েন্ট)`);
+  }
+
+  function adminUpdateRates() {
+    appData.match.sport = document.getElementById('adm-sport-in').value || appData.match.sport;
+    appData.match.t1 = document.getElementById('adm-t1-in').value || appData.match.t1;
+    appData.match.t2 = document.getElementById('adm-t2-in').value || appData.match.t2;
+    const t1b = parseFloat(document.getElementById('adm-t1b-in').value);
+    const t2b = parseFloat(document.getElementById('adm-t2b-in').value);
+    if (t1b) { appData.match.t1_back = t1b; appData.match.t1_lay = parseFloat((t1b + 0.02).toFixed(2)); }
+    if (t2b) { appData.match.t2_back = t2b; appData.match.t2_lay = parseFloat((t2b + 0.04).toFixed(2)); }
+    
+    syncStorage();
+    updateUI();
+    alert('ওডস ও ম্যাচের নাম পরিবর্তন সফল হয়েছে!');
+  }
+
+  function adminSettleMatch() {
+    const winnerTeamNum = parseInt(document.getElementById('adm-winner').value);
+    
+    appData.bets.forEach(b => {
+      if (b.status === 'OPEN') {
+        const isWin = (b.type === 'Back' && b.teamNum === winnerTeamNum) || (b.type === 'Lay' && b.teamNum !== winnerTeamNum);
+        if (isWin) {
+          const winAmount = Math.round(b.stake * b.odds);
+          appData.users[b.user].balance += winAmount;
+        }
+        b.status = isWin ? 'WON' : 'LOST';
+      }
+    });
+
+    syncStorage();
+    updateUI();
+    alert('ম্যাচের ফলাফল নিষ্পত্তি সম্পন্ন! পয়েন্ট স্বয়ংক্রিয়ভাবে যোগ/বিয়োগ হয়েছে।');
+  }
+</script>
+</body>
+</html>
