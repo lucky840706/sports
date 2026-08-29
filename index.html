@@ -78,7 +78,7 @@
 
 <div class="container">
 
-  <!-- লগইন সেকশন -->
+  <!-- ইউজার লগইন -->
   <div id="login-modal" class="login-card">
     <h3>🏏 ক্রিকেট এক্সচেঞ্জ লগইন</h3>
     <p style="font-size: 0.8rem; color: var(--muted); text-align: center; margin-bottom: 15px;">অ্যাডমিনের দেওয়া আইডি ও পাসওয়ার্ড লিখুন</p>
@@ -98,7 +98,7 @@
     <div id="match-container"></div>
 
     <div class="market-box" style="padding: 12px; margin-top: 20px;">
-      <h4 style="font-size: 0.85rem; color: var(--accent); margin-bottom: 8px;">আমার বেট হিস্ট্রি (Active Bets)</h4>
+      <h4 style="font-size: 0.85rem; color: var(--accent); margin-bottom: 8px;">আমার সক্রিয় বেট (Open Bets)</h4>
       <div id="bets-list"><small style="color: var(--muted);">কোনো বেট ধরা নেই</small></div>
     </div>
   </div>
@@ -125,7 +125,7 @@
       </select>
     </div>
 
-    <!-- ৩. রিয়েলটাইম পয়েন্ট যোগ / কর্তন -->
+    <!-- ৩. পয়েন্ট কন্ট্রোল (পরে যেকোনো সময় পয়েন্ট বাড়ানো/কমানো) -->
     <div class="admin-card">
       <h4>৩. ইউজারের পয়েন্ট যোগ / কর্তন (Deposit/Withdraw)</h4>
       <select id="adm-wallet-user-select"></select>
@@ -147,21 +147,21 @@
       <button class="adm-btn" style="background:#3b82f6; color:#fff;" onclick="adminAddMatch()">+ নতুন ম্যাচ লাইভ করুন</button>
     </div>
 
-    <!-- ৫. লাইভ ম্যাচ লিস্ট ও ওডস কন্ট্রোল -->
+    <!-- ৫. চলমান ম্যাচগুলোর ওডস বদলান বা ডিলিট করুন -->
     <div class="admin-card">
       <h4>৫. চলমান ম্যাচগুলোর ওডস বদলান বা ডিলিট করুন</h4>
       <div id="admin-matches-control-list"></div>
     </div>
 
-    <!-- ৬. ফলাফল নিষ্পত্তি (Winnings Auto Credit) -->
+    <!-- ৬. ফলাফল নিষ্পত্তি -->
     <div class="admin-card">
-      <h4>৬. ফলাফল ঘোষণা ও উইনিং পয়েন্ট বণ্টন (Settlement)</h4>
+      <h4>৬. ক্রিকেট ম্যাচের ফলাফল ঘোষণা ও উইনিং পয়েন্ট যোগ (Settlement)</h4>
       <select id="adm-settle-match"></select>
       <select id="adm-winner-select">
         <option value="1">টিম ১ জয়ী</option>
         <option value="2">টিম ২ জয়ী</option>
       </select>
-      <button class="adm-btn" style="background:var(--accent); color:#000;" onclick="adminSettleMatch()">ফলাফল নিষ্পত্তি ও পয়েন্ট পাঠান</button>
+      <button class="adm-btn" style="background:var(--accent); color:#000;" onclick="adminSettleMatch()">ফলাফল ঘোষণা করুন</button>
     </div>
   </div>
 
@@ -223,7 +223,6 @@
   }
 
   function initRealtimeSync() {
-    // তাৎক্ষণিক ডেটা ফেচ
     fetch(`https://ntfy.sh/${REALTIME_TOPIC}/json?poll=1&since=latest`)
       .then(r => r.text())
       .then(text => {
@@ -241,7 +240,6 @@
         }
       }).catch(()=>{});
 
-    // লাইভ ইভেন্ট লিসেনার
     try {
       const eventSource = new EventSource(`https://ntfy.sh/${REALTIME_TOPIC}/sse`);
       eventSource.onmessage = (e) => {
@@ -256,8 +254,12 @@
       };
     } catch(e){}
 
-    // ব্যাকআপ সিঙ্ক
     setInterval(() => {
+      // অ্যাডমিন কোনো ইনপুট বক্সে টাইপ করার সময় ব্যাকগ্রাউন্ড রি-রেন্ডার থামিয়ে রাখা
+      const activeElement = document.activeElement;
+      if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'SELECT')) {
+        return;
+      }
       fetch(`https://ntfy.sh/${REALTIME_TOPIC}/json?poll=1&since=latest`)
         .then(r => r.text())
         .then(text => {
@@ -279,7 +281,12 @@
 
   function updateAllViews() {
     if (currentUser) renderDashboard();
-    if (window.location.hash === '#secretadmin') populateAdminPanels();
+    if (window.location.hash === '#secretadmin') {
+      const activeEl = document.activeElement;
+      if (!activeEl || (activeEl.tagName !== 'INPUT' && activeEl.tagName !== 'SELECT')) {
+        populateAdminPanels();
+      }
+    }
   }
 
   function handleUrlAuth() {
@@ -413,7 +420,7 @@
 
     if (appData.rejectMode === 'ON') {
       closeSlip();
-      return alert('⚠️ Unmatched Bet / Rate Suspended! মার্কেট স্থগিত থাকায় বেট বাতিল করা হলো।');
+      return alert('⚠️ Unmatched Bet / Rate Suspended! অ্যাডমিন মার্কেট স্থগিত করায় আপনার বেটটি বাতিল করা হলো।');
     }
 
     appData.users[currentUser].balance -= stake;
@@ -463,12 +470,18 @@
 
     const userSel = document.getElementById('adm-wallet-user-select');
     if (userSel) {
+      const currentSelectedUser = userSel.value;
       userSel.innerHTML = Object.keys(appData.users || {}).map(u => `<option value="${u}">${u} (${appData.users[u].balance} Pts)</option>`).join('');
+      if (currentSelectedUser && appData.users[currentSelectedUser]) {
+        userSel.value = currentSelectedUser;
+      }
     }
 
     const matchSel = document.getElementById('adm-settle-match');
     if (matchSel) {
+      const currentSelectedMatch = matchSel.value;
       matchSel.innerHTML = (appData.matches || []).map(m => `<option value="${m.id}">${m.t1} vs ${m.t2}</option>`).join('');
+      if (currentSelectedMatch) matchSel.value = currentSelectedMatch;
     }
 
     const mList = document.getElementById('admin-matches-control-list');
@@ -538,13 +551,23 @@
     alert('নতুন ক্রিকেট ম্যাচ লাইভ হয়েছে!');
   }
 
+  // ফিক্সড ওডস আপডেট ফাংশন
   function adminUpdateOddsById(id) {
     const m = (appData.matches || []).find(x => x.id === id);
     if (m) {
-      const o1 = parseFloat(document.getElementById(`adm-odds1-${id}`).value);
-      const o2 = parseFloat(document.getElementById(`adm-odds2-${id}`).value);
-      if (o1) { m.t1_b = o1; m.t1_l = parseFloat((o1 + 0.02).toFixed(2)); }
-      if (o2) { m.t2_b = o2; m.t2_l = parseFloat((o2 + 0.04).toFixed(2)); }
+      const o1Input = document.getElementById(`adm-odds1-${id}`);
+      const o2Input = document.getElementById(`adm-odds2-${id}`);
+      
+      const o1 = parseFloat(o1Input.value);
+      const o2 = parseFloat(o2Input.value);
+
+      if (isNaN(o1) || isNaN(o2)) return alert('সঠিক ওডস মান লিখুন!');
+
+      m.t1_b = o1; 
+      m.t1_l = parseFloat((o1 + 0.02).toFixed(2));
+      m.t2_b = o2; 
+      m.t2_l = parseFloat((o2 + 0.04).toFixed(2));
+
       publishToCloud();
       alert('ওডস রিয়েলটাইমে আপডেট হয়েছে!');
     }
@@ -559,11 +582,14 @@
     alert('ম্যাচ মুছে ফেলা হয়েছে!');
   }
 
+  // ফিক্সড পয়েন্ট ডিপোজিট ও উইথড্র ফাংশন
   function adminUpdateWallet(action) {
     const targetUser = document.getElementById('adm-wallet-user-select').value;
-    const amount = parseFloat(document.getElementById('adm-wallet-amount').value);
+    const amountInput = document.getElementById('adm-wallet-amount');
+    const amount = parseFloat(amountInput.value);
 
-    if (!amount || amount <= 0) return alert('সঠিক পয়েন্ট দিন!');
+    if (!targetUser) return alert('ইউজার সিলেক্ট করুন!');
+    if (isNaN(amount) || amount <= 0) return alert('সঠিক পয়েন্টের পরিমাণ লিখুন!');
 
     if (action === 'ADD') {
       appData.users[targetUser].balance += amount;
@@ -574,12 +600,12 @@
       alert(`${targetUser}-এর অ্যাকাউন্ট থেকে ${amount} পয়েন্ট কাটা হয়েছে!`);
     }
 
+    amountInput.value = '';
     publishToCloud();
     populateAdminPanels();
     if (currentUser === targetUser) renderDashboard();
   }
 
-  // রেজাল্ট সেটেলমেন্ট (মূল পয়েন্ট + ওডস প্রফিট স্বয়ংক্রিয় যোগ)
   function adminSettleMatch() {
     const matchId = parseInt(document.getElementById('adm-settle-match').value);
     const winnerTeam = parseInt(document.getElementById('adm-winner-select').value);
@@ -588,7 +614,6 @@
       if (b.matchId === matchId && b.status === 'OPEN') {
         const isWin = (b.type === 'Back' && b.teamNum === winnerTeam) || (b.type === 'Lay' && b.teamNum !== winnerTeam);
         if (isWin) {
-          // ইউজার জিতলে সম্পূর্ণ রিটার্ন (Stake + Profit) যোগ হবে
           const returnAmount = Math.round(b.stake * b.odds);
           appData.users[b.user].balance += returnAmount;
           b.status = 'WON';
