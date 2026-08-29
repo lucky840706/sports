@@ -78,7 +78,7 @@
 
 <div class="container">
 
-  <!-- ইউজার লগইন -->
+  <!-- লগইন সেকশন -->
   <div id="login-modal" class="login-card">
     <h3>🏏 ক্রিকেট এক্সচেঞ্জ লগইন</h3>
     <p style="font-size: 0.8rem; color: var(--muted); text-align: center; margin-bottom: 15px;">অ্যাডমিনের দেওয়া আইডি ও পাসওয়ার্ড লিখুন</p>
@@ -98,7 +98,7 @@
     <div id="match-container"></div>
 
     <div class="market-box" style="padding: 12px; margin-top: 20px;">
-      <h4 style="font-size: 0.85rem; color: var(--accent); margin-bottom: 8px;">আমার সক্রিয় বেট (Open Bets)</h4>
+      <h4 style="font-size: 0.85rem; color: var(--accent); margin-bottom: 8px;">আমার বেট হিস্ট্রি (শেষ হওয়া ম্যাচ ১০ মিনিট পর মুছবে)</h4>
       <div id="bets-list"><small style="color: var(--muted);">কোনো বেট ধরা নেই</small></div>
     </div>
   </div>
@@ -125,7 +125,7 @@
       </select>
     </div>
 
-    <!-- ৩. পয়েন্ট কন্ট্রোল (পরে যেকোনো সময় পয়েন্ট বাড়ানো/কমানো) -->
+    <!-- ৩. পয়েন্ট কন্ট্রোল -->
     <div class="admin-card">
       <h4>৩. ইউজারের পয়েন্ট যোগ / কর্তন (Deposit/Withdraw)</h4>
       <select id="adm-wallet-user-select"></select>
@@ -138,7 +138,7 @@
 
     <!-- ৪. নতুন ম্যাচ তৈরি -->
     <div class="admin-card">
-      <h4>৪. নতুন ক্রিকেট ম্যাচ যুক্ত করুন (Add Multiple Matches)</h4>
+      <h4>৪. নতুন ক্রিকেট ম্যাচ যুক্ত করুন</h4>
       <input type="text" id="adm-tour" placeholder="টুর্নামেন্ট (যেমন: IPL 2026 / T20 Cup)">
       <input type="text" id="adm-t1" placeholder="টিম ১ (যেমন: India)">
       <input type="number" step="0.01" id="adm-t1-odds" placeholder="টিম ১ Back Rate (যেমন: 1.85)">
@@ -147,7 +147,7 @@
       <button class="adm-btn" style="background:#3b82f6; color:#fff;" onclick="adminAddMatch()">+ নতুন ম্যাচ লাইভ করুন</button>
     </div>
 
-    <!-- ৫. চলমান ম্যাচগুলোর ওডস বদলান বা ডিলিট করুন -->
+    <!-- ৫. লাইভ ম্যাচ লিস্ট ও ওডস কন্ট্রোল -->
     <div class="admin-card">
       <h4>৫. চলমান ম্যাচগুলোর ওডস বদলান বা ডিলিট করুন</h4>
       <div id="admin-matches-control-list"></div>
@@ -155,13 +155,21 @@
 
     <!-- ৬. ফলাফল নিষ্পত্তি -->
     <div class="admin-card">
-      <h4>৬. ক্রিকেট ম্যাচের ফলাফল ঘোষণা ও উইনিং পয়েন্ট যোগ (Settlement)</h4>
+      <h4>৬. ফলাফল ঘোষণা ও উইনিং পয়েন্ট যোগ (Settlement)</h4>
       <select id="adm-settle-match"></select>
       <select id="adm-winner-select">
         <option value="1">টিম ১ জয়ী</option>
         <option value="2">টিম ২ জয়ী</option>
       </select>
-      <button class="adm-btn" style="background:var(--accent); color:#000;" onclick="adminSettleMatch()">ফলাফল ঘোষণা করুন</button>
+      <button class="adm-btn" style="background:var(--accent); color:#000;" onclick="adminSettleMatch()">ফলাফল নিষ্পত্তি ও পয়েন্ট বণ্টন</button>
+    </div>
+
+    <!-- ৭. অ্যাডমিন স্থায়ী বেট হিস্ট্রি রেকর্ড -->
+    <div class="admin-card">
+      <h4>৭. সব ইউজারের স্থায়ী বেট হিস্ট্রি রেকর্ড</h4>
+      <div id="admin-master-bets" style="max-height: 250px; overflow-y: auto; font-size: 0.8rem;">
+        <small style="color: var(--muted);">কোনো বেট রেকর্ড নেই</small>
+      </div>
     </div>
   </div>
 
@@ -188,7 +196,7 @@
 </div>
 
 <script>
-  const REALTIME_TOPIC = "velki_lucky840706_exchange_channel_live";
+  const REALTIME_TOPIC = "velki_lucky840706_live_pipeline_v3";
 
   let defaultMatches = [
     { id: 1, tour: "IPL 2026", t1: "Kolkata Knight Riders", t2: "Mumbai Indians", t1_b: 1.88, t1_l: 1.90, t2_b: 2.02, t2_l: 2.06 },
@@ -204,6 +212,7 @@
 
   let currentUser = localStorage.getItem('vk_saved_session') || null;
   let activeBet = null;
+  let isPublishing = false;
 
   function saveLocalState() {
     localStorage.setItem('vk_saved_users', JSON.stringify(appData.users));
@@ -214,12 +223,18 @@
 
   async function publishToCloud() {
     saveLocalState();
+    if (isPublishing) return;
+    isPublishing = true;
     try {
       await fetch(`https://ntfy.sh/${REALTIME_TOPIC}`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(appData)
       });
-    } catch (e) {}
+    } catch (e) {
+    } finally {
+      isPublishing = false;
+    }
   }
 
   function initRealtimeSync() {
@@ -232,9 +247,12 @@
           try {
             const obj = JSON.parse(line);
             if (obj.event === 'message' && obj.message) {
-              appData = JSON.parse(obj.message);
-              saveLocalState();
-              updateAllViews();
+              const incoming = JSON.parse(obj.message);
+              if (incoming && incoming.users) {
+                appData = incoming;
+                saveLocalState();
+                updateAllViews();
+              }
             }
           } catch(e) {}
         }
@@ -246,18 +264,20 @@
         try {
           const obj = JSON.parse(e.data);
           if (obj.event === 'message' && obj.message) {
-            appData = JSON.parse(obj.message);
-            saveLocalState();
-            updateAllViews();
+            const incoming = JSON.parse(obj.message);
+            if (incoming && incoming.users) {
+              appData = incoming;
+              saveLocalState();
+              updateAllViews();
+            }
           }
         } catch(err){}
       };
     } catch(e){}
 
     setInterval(() => {
-      // অ্যাডমিন কোনো ইনপুট বক্সে টাইপ করার সময় ব্যাকগ্রাউন্ড রি-রেন্ডার থামিয়ে রাখা
-      const activeElement = document.activeElement;
-      if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'SELECT')) {
+      const activeEl = document.activeElement;
+      if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'SELECT')) {
         return;
       }
       fetch(`https://ntfy.sh/${REALTIME_TOPIC}/json?poll=1&since=latest`)
@@ -269,9 +289,12 @@
             try {
               const obj = JSON.parse(line);
               if (obj.event === 'message' && obj.message) {
-                appData = JSON.parse(obj.message);
-                saveLocalState();
-                updateAllViews();
+                const incoming = JSON.parse(obj.message);
+                if (incoming && incoming.users) {
+                  appData = incoming;
+                  saveLocalState();
+                  updateAllViews();
+                }
               }
             } catch(e) {}
           }
@@ -434,7 +457,8 @@
       type: activeBet.type,
       odds: activeBet.odds,
       stake: stake,
-      status: 'OPEN'
+      status: 'OPEN',
+      settledAt: null
     });
 
     publishToCloud();
@@ -443,13 +467,23 @@
     alert('✅ বেট সফলভাবে প্লেস হয়েছে!');
   }
 
+  // ইউজারের বেট হিস্ট্রি (ম্যাচ শেষের ১০ মিনিট পর মুছে যাবে)
   function renderOpenBets() {
     const list = document.getElementById('bets-list');
-    const myBets = (appData.bets || []).filter(b => b.user === currentUser);
-    if (myBets.length === 0) {
+    const now = Date.now();
+    const tenMinutesMs = 10 * 60 * 1000;
+
+    const visibleBets = (appData.bets || []).filter(b => {
+      if (b.user !== currentUser) return false;
+      if (b.status === 'OPEN') return true;
+      if (b.settledAt && (now - b.settledAt < tenMinutesMs)) return true;
+      return false;
+    });
+
+    if (visibleBets.length === 0) {
       list.innerHTML = '<small style="color: var(--muted);">কোনো বেট ধরা নেই</small>';
     } else {
-      list.innerHTML = myBets.map(b => {
+      list.innerHTML = visibleBets.map(b => {
         let badgeColor = b.status === 'WON' ? '#22c55e' : (b.status === 'LOST' ? '#ef4444' : 'var(--accent)');
         return `
           <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.85rem; padding:8px 0; border-bottom:1px solid #1a2c4c;">
@@ -503,6 +537,25 @@
         `;
       });
     }
+
+    // অ্যাডমিন মাস্টার বেট হিস্ট্রি
+    const adminBetsContainer = document.getElementById('admin-master-bets');
+    if (adminBetsContainer) {
+      const allBets = appData.bets || [];
+      if (allBets.length === 0) {
+        adminBetsContainer.innerHTML = '<small style="color: var(--muted);">কোনো বেট রেকর্ড নেই</small>';
+      } else {
+        adminBetsContainer.innerHTML = allBets.slice().reverse().map(b => {
+          let badgeColor = b.status === 'WON' ? '#22c55e' : (b.status === 'LOST' ? '#ef4444' : 'var(--accent)');
+          return `
+            <div style="padding:6px 0; border-bottom:1px solid #1a2c4c; display:flex; justify-content:space-between;">
+              <span><b>${b.user}</b>: ${b.team} (${b.type}) @ ${b.odds} - <b>${b.stake} Pts</b></span>
+              <span style="color:${badgeColor}; font-weight:bold;">${b.status}</span>
+            </div>
+          `;
+        }).join('');
+      }
+    }
   }
 
   function toggleRejectMode() {
@@ -551,7 +604,6 @@
     alert('নতুন ক্রিকেট ম্যাচ লাইভ হয়েছে!');
   }
 
-  // ফিক্সড ওডস আপডেট ফাংশন
   function adminUpdateOddsById(id) {
     const m = (appData.matches || []).find(x => x.id === id);
     if (m) {
@@ -582,7 +634,6 @@
     alert('ম্যাচ মুছে ফেলা হয়েছে!');
   }
 
-  // ফিক্সড পয়েন্ট ডিপোজিট ও উইথড্র ফাংশন
   function adminUpdateWallet(action) {
     const targetUser = document.getElementById('adm-wallet-user-select').value;
     const amountInput = document.getElementById('adm-wallet-amount');
@@ -609,6 +660,7 @@
   function adminSettleMatch() {
     const matchId = parseInt(document.getElementById('adm-settle-match').value);
     const winnerTeam = parseInt(document.getElementById('adm-winner-select').value);
+    const settleTimestamp = Date.now();
 
     (appData.bets || []).forEach(b => {
       if (b.matchId === matchId && b.status === 'OPEN') {
@@ -620,6 +672,7 @@
         } else {
           b.status = 'LOST';
         }
+        b.settledAt = settleTimestamp;
       }
     });
 
