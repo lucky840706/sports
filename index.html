@@ -3,9 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Velki Pro Live Cricket Exchange</title>
-  <!-- Zero-Block WebSocket Realtime Engine -->
-  <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+  <title>Velki Pro Sports Exchange</title>
+  
+  <!-- Firebase Realtime Engine -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
   <style>
     :root {
       --bg-dark: #07101e;
@@ -23,7 +26,7 @@
     body { background: var(--bg-dark); color: var(--text); padding-bottom: 90px; }
 
     header { background: var(--header-bg); padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #233b63; position: sticky; top: 0; z-index: 50; }
-    .logo { font-weight: 900; color: var(--accent); font-size: 1.15rem; }
+    .logo { font-weight: 900; color: var(--accent); font-size: 1.15rem; letter-spacing: 0.5px; }
     .user-badge { background: #0b1424; padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: bold; border: 1px solid #233b63; display: flex; align-items: center; gap: 8px; }
     .logout-btn { background: var(--danger); border: none; color: #fff; font-size: 0.7rem; padding: 3px 8px; border-radius: 4px; cursor: pointer; }
 
@@ -68,7 +71,7 @@
 <body>
 
 <header>
-  <div class="logo">VELKI LIVE CRICKET</div>
+  <div class="logo">VELKI PRO EXCHANGE</div>
   <div id="auth-header">
     <div class="user-badge" id="user-display" style="display:none;">
       <span>👤 <strong id="u-name">User</strong></span> | 
@@ -80,7 +83,7 @@
 
 <div class="container">
 
-  <!-- লগইন সেকশন -->
+  <!-- লগইন উইন্ডো -->
   <div id="login-modal" class="login-card">
     <h3>🏏 ক্রিকেট এক্সচেঞ্জ লগইন</h3>
     <p style="font-size: 0.8rem; color: var(--muted); text-align: center; margin-bottom: 15px;">অ্যাডমিনের দেওয়া আইডি ও পাসওয়ার্ড লিখুন</p>
@@ -92,24 +95,23 @@
   <!-- ইউজার ড্যাশবোর্ড -->
   <div id="main-app" style="display: none;">
     <div class="cricket-banner">
-      <span>🏏 LIVE CRICKET (WebSocket Synced)</span>
-      <span style="color:#22c55e;">● IN-PLAY LIVE</span>
+      <span>🏏 LIVE CRICKET IN-PLAY</span>
+      <span style="color:#22c55e;">● REALTIME FEED</span>
     </div>
 
-    <!-- ম্যাচ কন্টেইনার -->
     <div id="match-container"></div>
 
     <div class="market-box" style="padding: 12px; margin-top: 20px;">
-      <h4 style="font-size: 0.85rem; color: var(--accent); margin-bottom: 8px;">আমার বেট হিস্ট্রি (শেষ হওয়া ম্যাচ ১০ মিনিট পর মুছবে)</h4>
+      <h4 style="font-size: 0.85rem; color: var(--accent); margin-bottom: 8px;">আমার বেট হিস্ট্রি (Active Bets)</h4>
       <div id="bets-list"><small style="color: var(--muted);">কোনো বেট ধরা নেই</small></div>
     </div>
   </div>
 
-  <!-- অ্যাডমিন প্যানেল -->
+  <!-- অ্যাডমিন কন্ট্রোল প্যানেল -->
   <div id="admin-panel">
     <h3 style="color: var(--danger); margin-bottom: 12px;">🔒 মাস্টার অ্যাডমিন পোর্টাল (Live Control)</h3>
     
-    <!-- ১. হোয়াটসঅ্যাপ লিংক তৈরি -->
+    <!-- ১. নতুন ইউজার ও ইনভাইট লিংক -->
     <div class="admin-card">
       <h4>১. বন্ধুর জন্য হোয়াটসঅ্যাপ লগইন লিংক তৈরি</h4>
       <input type="text" id="adm-new-user" placeholder="বন্ধুর ইউজারনেম (যেমন: rahul)">
@@ -127,7 +129,7 @@
       </select>
     </div>
 
-    <!-- ৩. পয়েন্ট কন্ট্রোল -->
+    <!-- ৩. লাইভ পয়েন্ট অ্যাড / ডিডাক্ট -->
     <div class="admin-card">
       <h4>৩. ইউজারের পয়েন্ট যোগ / কর্তন (Deposit/Withdraw)</h4>
       <select id="adm-wallet-user-select"></select>
@@ -149,7 +151,7 @@
       <button class="adm-btn" style="background:#3b82f6; color:#fff;" onclick="adminAddMatch()">+ নতুন ম্যাচ লাইভ করুন</button>
     </div>
 
-    <!-- ৫. লাইভ ম্যাচ লিস্ট ও ওডস কন্ট্রোল -->
+    <!-- ৫. লাইভ ওডস বদলান বা ডিলিট করুন -->
     <div class="admin-card">
       <h4>৫. চলমান ম্যাচগুলোর ওডস বদলান বা ডিলিট করুন</h4>
       <div id="admin-matches-control-list"></div>
@@ -166,7 +168,7 @@
       <button class="adm-btn" style="background:var(--accent); color:#000;" onclick="adminSettleMatch()">ফলাফল নিষ্পত্তি ও পয়েন্ট বণ্টন</button>
     </div>
 
-    <!-- ৭. অ্যাডমিন স্থায়ী বেট হিস্ট্রি রেকর্ড -->
+    <!-- ৭. স্থায়ী অ্যাডমিন মাস্টার লগ -->
     <div class="admin-card">
       <h4>৭. সব ইউজারের স্থায়ী বেট হিস্ট্রি রেকর্ড</h4>
       <div id="admin-master-bets" style="max-height: 250px; overflow-y: auto; font-size: 0.8rem;">
@@ -177,7 +179,7 @@
 
 </div>
 
-<!-- Bet Slip -->
+<!-- Bet Slip Modal -->
 <div id="betslip">
   <div class="betslip-inner">
     <div style="display:flex; justify-content:space-between; margin-bottom: 6px;">
@@ -198,67 +200,47 @@
 </div>
 
 <script>
-  // অল্টারনেট ডুয়েল-চ্যানেল ক্লাউড সিঙ্ক
-  const API_CHANNEL = "https://api.restful-api.dev/objects";
-  const DOC_ID = "ff808181932badb80193309a63c604b9";
-
-  let defaultMatches = [
-    { id: 1, tour: "IPL 2026", t1: "Kolkata Knight Riders", t2: "Mumbai Indians", t1_b: 1.88, t1_l: 1.90, t2_b: 2.02, t2_l: 2.06 },
-    { id: 2, tour: "T20 World Cup", t1: "India", t2: "Australia", t1_b: 1.75, t1_l: 1.77, t2_b: 2.20, t2_l: 2.24 }
-  ];
+  // সরাসরি রিয়েল-টাইম ক্লাউড ইনিশিয়ালাইজেশন
+  const firebaseConfig = {
+    databaseURL: "https://velki-realtime-default-rtdb.firebaseio.com"
+  };
+  
+  if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+  }
+  const dbRef = firebase.database().ref("exchange_master_state");
 
   let appData = {
-    users: JSON.parse(localStorage.getItem('vk_saved_users')) || { "demo": { pass: "1234", balance: 10000 } },
-    matches: JSON.parse(localStorage.getItem('vk_saved_matches')) || defaultMatches,
-    bets: JSON.parse(localStorage.getItem('vk_saved_bets')) || [],
-    rejectMode: localStorage.getItem('vk_saved_reject') || 'OFF'
+    users: { "demo": { pass: "1234", balance: 10000 } },
+    matches: [
+      { id: 1, tour: "IPL 2026", t1: "Kolkata Knight Riders", t2: "Mumbai Indians", t1_b: 1.88, t1_l: 1.90, t2_b: 2.02, t2_l: 2.06 },
+      { id: 2, tour: "T20 World Cup", t1: "India", t2: "Australia", t1_b: 1.75, t1_l: 1.77, t2_b: 2.20, t2_l: 2.24 }
+    ],
+    bets: [],
+    rejectMode: 'OFF'
   };
 
   let currentUser = localStorage.getItem('vk_saved_session') || null;
   let activeBet = null;
 
-  function saveLocalState() {
-    localStorage.setItem('vk_saved_users', JSON.stringify(appData.users));
-    localStorage.setItem('vk_saved_matches', JSON.stringify(appData.matches));
-    localStorage.setItem('vk_saved_bets', JSON.stringify(appData.bets));
-    localStorage.setItem('vk_saved_reject', appData.rejectMode);
-  }
-
-  // লাইভ ক্লাউড পুশ
-  async function publishToCloud() {
-    saveLocalState();
-    try {
-      await fetch(`https://api.restful-api.dev/objects/${DOC_ID}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: "velki_live_exchange_state",
-          data: appData
-        })
-      });
-    } catch(e) {}
-  }
-
-  // লাইভ ক্লাউড ফেচ
-  async function fetchLiveCloud() {
-    const activeEl = document.activeElement;
-    if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'SELECT')) {
-      return;
+  // সার্বক্ষণিক টু-ওয়ে সিঙ্ক লিসেনার
+  dbRef.on('value', (snapshot) => {
+    const cloudData = snapshot.val();
+    if (cloudData) {
+      appData = cloudData;
+      if (!appData.matches) appData.matches = [];
+      if (!appData.bets) appData.bets = [];
+      if (!appData.users) appData.users = {};
+      
+      localStorage.setItem('vk_saved_state', JSON.stringify(appData));
+      updateAllViews();
     }
-    try {
-      const res = await fetch(`https://api.restful-api.dev/objects/${DOC_ID}`);
-      if (res.ok) {
-        const json = await res.json();
-        if (json && json.data && json.data.users) {
-          appData = json.data;
-          saveLocalState();
-          updateAllViews();
-        }
-      }
-    } catch(e) {}
-  }
+  });
 
-  setInterval(fetchLiveCloud, 1000);
+  function pushToCloud() {
+    dbRef.set(appData);
+    localStorage.setItem('vk_saved_state', JSON.stringify(appData));
+  }
 
   function updateAllViews() {
     if (currentUser) renderDashboard();
@@ -281,7 +263,7 @@
       appData.users[u] = { pass: p, balance: parseFloat(b) || 10000 };
       currentUser = u;
       localStorage.setItem('vk_saved_session', currentUser);
-      publishToCloud();
+      pushToCloud();
       window.history.replaceState({}, document.title, window.location.pathname);
       initDashboard();
       return;
@@ -401,7 +383,7 @@
 
     if (appData.rejectMode === 'ON') {
       closeSlip();
-      return alert('⚠️ Unmatched Bet / Rate Suspended! অ্যাডমিন মার্কেট স্থগিত করায় আপনার বেটটি বাতিল করা হলো।');
+      return alert('⚠️ Unmatched Bet / Rate Suspended! মার্কেট স্থগিত থাকায় আপনার বেটটি বাতিল করা হলো।');
     }
 
     appData.users[currentUser].balance -= stake;
@@ -419,7 +401,7 @@
       settledAt: null
     });
 
-    publishToCloud();
+    pushToCloud();
     closeSlip();
     renderDashboard();
     alert('✅ বেট সফলভাবে প্লেস হয়েছে!');
@@ -455,7 +437,7 @@
     }
   }
 
-  /* Admin Actions */
+  /* Admin Dashboard Actions */
   function populateAdminPanels() {
     document.getElementById('adm-reject-switch').value = appData.rejectMode || 'OFF';
 
@@ -516,7 +498,7 @@
 
   function toggleRejectMode() {
     appData.rejectMode = document.getElementById('adm-reject-switch').value;
-    publishToCloud();
+    pushToCloud();
     alert(`বেট রিজেক্ট মোড এখন: ${appData.rejectMode}`);
   }
 
@@ -529,7 +511,7 @@
 
     if (!appData.users) appData.users = {};
     appData.users[u] = { pass: p, balance: parseFloat(b) };
-    publishToCloud();
+    pushToCloud();
     populateAdminPanels();
 
     const base = window.location.origin + window.location.pathname;
@@ -554,7 +536,7 @@
       t2_b, t2_l: parseFloat((t2_b + 0.04).toFixed(2))
     });
 
-    publishToCloud();
+    pushToCloud();
     populateAdminPanels();
     renderMatches();
     alert('নতুন ক্রিকেট ম্যাচ লাইভ হয়েছে!');
@@ -573,7 +555,7 @@
       m.t2_b = o2; 
       m.t2_l = parseFloat((o2 + 0.04).toFixed(2));
 
-      publishToCloud();
+      pushToCloud();
       alert('ওডস রিয়েলটাইমে আপডেট হয়েছে!');
     }
   }
@@ -581,7 +563,7 @@
   function adminDeleteMatchById(id) {
     if (!confirm('ম্যাচটি মুছে ফেলতে চান?')) return;
     appData.matches = (appData.matches || []).filter(m => m.id !== id);
-    publishToCloud();
+    pushToCloud();
     populateAdminPanels();
     renderMatches();
     alert('ম্যাচ মুছে ফেলা হয়েছে!');
@@ -605,7 +587,7 @@
     }
 
     amountInput.value = '';
-    publishToCloud();
+    pushToCloud();
     populateAdminPanels();
     if (currentUser === targetUser) renderDashboard();
   }
@@ -630,13 +612,12 @@
     });
 
     appData.matches = (appData.matches || []).filter(m => m.id !== matchId);
-    publishToCloud();
+    pushToCloud();
     populateAdminPanels();
     if (currentUser) renderDashboard();
     alert('ফলাফল নিষ্পত্তি হয়েছে এবং বিজয়ী ইউজারের ব্যালেন্সে পয়েন্ট ট্রান্সফার করা হয়েছে!');
   }
 
-  fetchLiveCloud();
   handleUrlAuth();
 </script>
 </body>
