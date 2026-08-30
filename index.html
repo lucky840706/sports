@@ -3,11 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Velki Pro Sports Exchange</title>
+  <title>Velki Pro Live Exchange</title>
   
-  <!-- High Resilience Realtime P2P Mesh Engine -->
-  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
+  <!-- Direct WebRTC Peer Connection Engine -->
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 
   <style>
     :root {
@@ -26,7 +25,7 @@
     body { background: var(--bg-dark); color: var(--text); padding-bottom: 90px; }
 
     header { background: var(--header-bg); padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #233b63; position: sticky; top: 0; z-index: 50; }
-    .logo { font-weight: 900; color: var(--accent); font-size: 1.15rem; letter-spacing: 0.5px; }
+    .logo { font-weight: 900; color: var(--accent); font-size: 1.15rem; }
     .user-badge { background: #0b1424; padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: bold; border: 1px solid #233b63; display: flex; align-items: center; gap: 8px; }
     .logout-btn { background: var(--danger); border: none; color: #fff; font-size: 0.7rem; padding: 3px 8px; border-radius: 4px; cursor: pointer; }
 
@@ -83,7 +82,7 @@
 
 <div class="container">
 
-  <!-- লগইন সেকশন -->
+  <!-- লগইন উইন্ডো -->
   <div id="login-modal" class="login-card">
     <h3>🏏 ক্রিকেট এক্সচেঞ্জ লগইন</h3>
     <p style="font-size: 0.8rem; color: var(--muted); text-align: center; margin-bottom: 15px;">অ্যাডমিনের দেওয়া আইডি ও পাসওয়ার্ড লিখুন</p>
@@ -108,7 +107,7 @@
     </div>
   </div>
 
-  <!-- অ্যাডমিন কন্ট্রোল প্যানেল -->
+  <!-- অ্যাডমিন প্যানেল -->
   <div id="admin-panel">
     <h3 style="color: var(--danger); margin-bottom: 12px;">🔒 মাস্টার অ্যাডমিন পোর্টাল (Live Control)</h3>
     
@@ -152,7 +151,7 @@
       <button class="adm-btn" style="background:#3b82f6; color:#fff;" onclick="adminAddMatch()">+ নতুন ম্যাচ লাইভ করুন</button>
     </div>
 
-    <!-- ৫. লাইভ ম্যাচ লিস্ট ও ওডস কন্ট্রোল -->
+    <!-- ৫. লাইভ ওডস বদলান বা ডিলিট করুন -->
     <div class="admin-card">
       <h4>৫. চলমান ম্যাচগুলোর ওডস বদলান বা ডিলিট করুন</h4>
       <div id="admin-matches-control-list"></div>
@@ -169,7 +168,7 @@
       <button class="adm-btn" style="background:var(--accent); color:#000;" onclick="adminSettleMatch()">ফলাফল নিষ্পত্তি ও পয়েন্ট বণ্টন</button>
     </div>
 
-    <!-- ৭. স্থায়ী অ্যাডমিন মাস্টার লগ -->
+    <!-- ৭. অ্যাডমিন মাস্টার লগ -->
     <div class="admin-card">
       <h4>৭. সব ইউজারের স্থায়ী বেট হিস্ট্রি রেকর্ড</h4>
       <div id="admin-master-bets" style="max-height: 250px; overflow-y: auto; font-size: 0.8rem;">
@@ -201,14 +200,10 @@
 </div>
 
 <script>
-  // মাল্টি-পিয়ার রিয়েলটাইম মেশ হাব
-  const peerList = [
-    'https://gun-manhattan.herokuapp.com/gun',
-    'https://peer.wallie.io/gun',
-    'https://gunjs.herokuapp.com/gun'
-  ];
-  const gun = Gun({ peers: peerList });
-  const liveChannel = gun.get('velki_master_cloud_v2026_sports');
+  // ডিরেক্ট WebRTC কানেকশন চ্যানেল
+  const ADMIN_PEER_ID = "lucky840706_velki_admin_node_v1";
+  let peer = null;
+  let peerConnections = [];
 
   let defaultMatches = [
     { id: 1, tour: "IPL 2026", t1: "Kolkata Knight Riders", t2: "Mumbai Indians", t1_b: 1.88, t1_l: 1.90, t2_b: 2.02, t2_l: 2.06 },
@@ -224,6 +219,7 @@
 
   let currentUser = localStorage.getItem('vk_saved_session') || null;
   let activeBet = null;
+  const isAdmin = (window.location.hash === '#secretadmin');
 
   function saveLocalState() {
     localStorage.setItem('vk_saved_users', JSON.stringify(appData.users));
@@ -232,29 +228,67 @@
     localStorage.setItem('vk_saved_reject', appData.rejectMode);
   }
 
-  // ক্লাউডে ইনস্ট্যান্ট ব্রডকাস্ট
-  function syncToMesh() {
-    saveLocalState();
-    liveChannel.put({ payload: JSON.stringify(appData) });
+  // পিয়ার-টু-পিয়ার ডিরেক্ট সিঙ্ক ইনিশিয়ালাইজেশন
+  function initP2PEngine() {
+    if (isAdmin) {
+      peer = new Peer(ADMIN_PEER_ID);
+      peer.on('connection', (conn) => {
+        peerConnections.push(conn);
+        conn.on('open', () => {
+          conn.send({ type: 'SYNC_STATE', state: appData });
+        });
+        conn.on('data', (data) => {
+          if (data.type === 'PLACE_BET') {
+            handleIncomingBet(data.bet);
+          }
+        });
+      });
+    } else {
+      peer = new Peer();
+      peer.on('open', () => {
+        connectToAdminNode();
+      });
+    }
   }
 
-  // লাইভ পিয়ার লিসেনার
-  liveChannel.on((data) => {
-    if (data && data.payload) {
-      try {
-        const incoming = JSON.parse(data.payload);
-        if (incoming && incoming.users) {
-          appData = incoming;
-          saveLocalState();
-          updateAllViews();
-        }
-      } catch(e) {}
-    }
-  });
+  function connectToAdminNode() {
+    const conn = peer.connect(ADMIN_PEER_ID);
+    conn.on('open', () => {
+      window.adminConn = conn;
+    });
+    conn.on('data', (data) => {
+      if (data.type === 'SYNC_STATE') {
+        appData = data.state;
+        saveLocalState();
+        updateAllViews();
+      }
+    });
+    conn.on('close', () => {
+      setTimeout(connectToAdminNode, 2000);
+    });
+  }
+
+  // অ্যাডমিন থেকে সব ইউজারের ফোনে ডেটা পাঠানো
+  function broadcastState() {
+    saveLocalState();
+    peerConnections.forEach(conn => {
+      if (conn.open) {
+        conn.send({ type: 'SYNC_STATE', state: appData });
+      }
+    });
+  }
+
+  function handleIncomingBet(bet) {
+    if (appData.rejectMode === 'ON') return;
+    appData.users[bet.user].balance -= bet.stake;
+    appData.bets.push(bet);
+    broadcastState();
+    updateAllViews();
+  }
 
   function updateAllViews() {
     if (currentUser) renderDashboard();
-    if (window.location.hash === '#secretadmin') {
+    if (isAdmin) {
       const activeEl = document.activeElement;
       if (!activeEl || (activeEl.tagName !== 'INPUT' && activeEl.tagName !== 'SELECT')) {
         populateAdminPanels();
@@ -273,13 +307,13 @@
       appData.users[u] = { pass: p, balance: parseFloat(b) || 10000 };
       currentUser = u;
       localStorage.setItem('vk_saved_session', currentUser);
-      syncToMesh();
+      broadcastState();
       window.history.replaceState({}, document.title, window.location.pathname);
       initDashboard();
       return;
     }
 
-    if (window.location.hash === '#secretadmin') {
+    if (isAdmin) {
       document.getElementById('admin-panel').style.display = 'block';
       populateAdminPanels();
     }
@@ -396,9 +430,7 @@
       return alert('⚠️ Unmatched Bet / Rate Suspended! মার্কেট স্থগিত থাকায় আপনার বেটটি বাতিল করা হলো।');
     }
 
-    appData.users[currentUser].balance -= stake;
-    if (!appData.bets) appData.bets = [];
-    appData.bets.push({
+    const newBet = {
       id: Date.now(),
       matchId: activeBet.matchId,
       user: currentUser,
@@ -409,9 +441,16 @@
       stake: stake,
       status: 'OPEN',
       settledAt: null
-    });
+    };
 
-    syncToMesh();
+    if (isAdmin) {
+      handleIncomingBet(newBet);
+    } else if (window.adminConn && window.adminConn.open) {
+      window.adminConn.send({ type: 'PLACE_BET', bet: newBet });
+      appData.users[currentUser].balance -= stake;
+      appData.bets.push(newBet);
+    }
+
     closeSlip();
     renderDashboard();
     alert('✅ বেট সফলভাবে প্লেস হয়েছে!');
@@ -447,7 +486,7 @@
     }
   }
 
-  /* Admin Control Logic */
+  /* Admin Actions */
   function populateAdminPanels() {
     document.getElementById('adm-reject-switch').value = appData.rejectMode || 'OFF';
 
@@ -508,7 +547,7 @@
 
   function toggleRejectMode() {
     appData.rejectMode = document.getElementById('adm-reject-switch').value;
-    syncToMesh();
+    broadcastState();
     alert(`বেট রিজেক্ট মোড এখন: ${appData.rejectMode}`);
   }
 
@@ -521,7 +560,7 @@
 
     if (!appData.users) appData.users = {};
     appData.users[u] = { pass: p, balance: parseFloat(b) };
-    syncToMesh();
+    broadcastState();
     populateAdminPanels();
 
     const base = window.location.origin + window.location.pathname;
@@ -546,7 +585,7 @@
       t2_b, t2_l: parseFloat((t2_b + 0.04).toFixed(2))
     });
 
-    syncToMesh();
+    broadcastState();
     populateAdminPanels();
     renderMatches();
     alert('নতুন ক্রিকেট ম্যাচ লাইভ হয়েছে!');
@@ -555,11 +594,8 @@
   function adminUpdateOddsById(id) {
     const m = (appData.matches || []).find(x => x.id === id);
     if (m) {
-      const o1Input = document.getElementById(`adm-odds1-${id}`);
-      const o2Input = document.getElementById(`adm-odds2-${id}`);
-      
-      const o1 = parseFloat(o1Input.value);
-      const o2 = parseFloat(o2Input.value);
+      const o1 = parseFloat(document.getElementById(`adm-odds1-${id}`).value);
+      const o2 = parseFloat(document.getElementById(`adm-odds2-${id}`).value);
 
       if (isNaN(o1) || isNaN(o2)) return alert('সঠিক ওডস মান লিখুন!');
 
@@ -568,15 +604,15 @@
       m.t2_b = o2; 
       m.t2_l = parseFloat((o2 + 0.04).toFixed(2));
 
-      syncToMesh();
-      alert('ওডস রিয়েলটাইমে আপডেট হয়েছে!');
+      broadcastState();
+      alert('ওডস ডিরেক্ট লাইভ আপডেট হয়েছে!');
     }
   }
 
   function adminDeleteMatchById(id) {
     if (!confirm('ম্যাচটি মুছে ফেলতে চান?')) return;
     appData.matches = (appData.matches || []).filter(m => m.id !== id);
-    syncToMesh();
+    broadcastState();
     populateAdminPanels();
     renderMatches();
     alert('ম্যাচ মুছে ফেলা হয়েছে!');
@@ -600,7 +636,7 @@
     }
 
     amountInput.value = '';
-    syncToMesh();
+    broadcastState();
     populateAdminPanels();
     if (currentUser === targetUser) renderDashboard();
   }
@@ -625,12 +661,13 @@
     });
 
     appData.matches = (appData.matches || []).filter(m => m.id !== matchId);
-    syncToMesh();
+    broadcastState();
     populateAdminPanels();
     if (currentUser) renderDashboard();
     alert('ফলাফল নিষ্পত্তি হয়েছে এবং বিজয়ী ইউজারের ব্যালেন্সে পয়েন্ট ট্রান্সফার করা হয়েছে!');
   }
 
+  initP2PEngine();
   handleUrlAuth();
 </script>
 </body>
